@@ -1,0 +1,80 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+@layer base {
+    :root {
+        --black_900_00: #00000000;
+        --black_900_7f: #0000007f;
+        --blk: #000000;
+        --blue_gray_400: #868686;
+        --gray_100: #f4f4f4;
+        --gray_300: #dfdfdf;
+        --gray_400: #c2c2c6;
+        --white_a700: #ffffff;
+        --white_a700_99: #ffffff99;
+    }
+}
+
+body {
+    margin: 0;
+    padding: 0;
+    font-family: Helvetica;
+}
+
+* {
+    box-sizing: border-box;
+    line-height: normal;
+    font-family: inherit;
+    margin: 0; 
+    padding: 0; 
+}
+
+a {
+    text-decoration: none;
+    display: block;
+}
+
+ul {
+    margin: 0;
+    margin-inline: unset !important;
+    padding: 0;
+    list-style: none;
+}
+
+:root {
+    --black_900_00: #00000000;
+    --black_900_7f: #0000007f;
+    --blk: #000000;
+    --blue_gray_400: #868686;
+    --gray_100: #f4f4f4;
+    --gray_300: #dfdfdf;
+    --gray_400: #c2c2c6;
+    --white_a700: #ffffff;
+    --white_a700_99: #ffffff99;
+}
+
+@font-face {
+    font-display: swap;
+    font-style: normal;
+    src: url("/fonts/Helvetica-Bold.ttf");
+    font-family: "Helvetica";
+    font-weight: 700;
+}
+
+@font-face {
+    font-display: swap;
+    font-style: normal;
+    src: url("/fonts/Helvetica-Oblique.ttf");
+    font-family: "Helvetica";
+    font-weight: 400;
+}
+
+@font-face {
+    font-display: swap;
+    font-style: normal;
+    src: url("/fonts/Helvetica.ttf");
+    font-family: "Helvetica";
+    font-weight: 400;
+}
+
