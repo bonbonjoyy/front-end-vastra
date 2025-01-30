@@ -37,7 +37,7 @@ export default function Register() {
       const response = await api.post("/auth/register", {
         username: data.username,
         email: data.email,
-        kata_sandi: data.kata_sandi,
+        kata_sandi: data.password, // Ganti 'password' dengan 'kata_sandi'
       });
 
       if (response.data.token) {
@@ -123,7 +123,7 @@ export default function Register() {
                 <p className="text-red-500 text-sm">{errors.username.message}</p>
               )}
 
-              {/* Input Password */}
+              {/* Input Kata Sandi */}
               <div className="relative w-full">
                 <input
                   type={showPassword ? "text" : "password"}
@@ -149,7 +149,7 @@ export default function Register() {
                 <p className="text-red-500 text-sm">{errors.password.message}</p>
               )}
 
-              {/* Input Confirm Password */}
+              {/* Input Konfirmasi Kata Sandi */}
               <div className="relative w-full">
                 <input
                   type={showConfirmPassword ? "text" : "password"}
@@ -180,7 +180,7 @@ export default function Register() {
                 </p>
               )}
 
-              {/* Tombol Masuk */}
+              {/* Tombol Daftar */}
               <button
                 type="submit"
                 className="w-full py-2.5 bg-white text-black font-helvetica text-[12px] border border-black hover:bg-black hover:text-white transition-colors"
