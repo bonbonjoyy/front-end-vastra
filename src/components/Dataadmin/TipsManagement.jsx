@@ -223,7 +223,7 @@ const TipsManagement = () => {
                         <img
                           src={
                             tip.image
-                              ? `http://localhost:3333${tip.image}`
+                              ? `https://back-end-vastra.vercel.app${tip.image}`
                               : "/asset/image/tipsplaceholder.svg"
                           }
                           alt="Tips"
