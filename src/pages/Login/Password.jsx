@@ -16,7 +16,7 @@ export default function Password() {
     console.log("Data yang di-submit:", data);
     try {
       // Send the email to the API
-      const response = await axios.put("http://localhost:3333/api/users/forgotpassword", {
+      const response = await axios.put("https://back-end-vastra.vercel.app/api/users/forgotpassword", {
         email: data.email,
       });
       // If successful, show the email sent notification

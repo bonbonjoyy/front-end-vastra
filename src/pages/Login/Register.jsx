@@ -59,7 +59,7 @@ export default function Register() {
   };
 
   return (
-    <div className="flex justify-center min-h-screen bg-white mt-8 lg:mt-0">
+    <div className="flex justify-center min-h-screen bg-white mt-2 lg:mt-0">
       <div className="max-w-[1220px] mx-auto flex flex-col lg:flex-row w-full">
         {/* Bagian Gambar */}
         <div className="flex-1 flex items-center justify-center sm:pr-2 md:pr-4 lg:pr-5 md:justify-end w-full mb-4 md:mb-0 md:order-2 relative lg:justify-end overflow-hidden">
@@ -85,7 +85,7 @@ export default function Register() {
                   lg:mt-[70px] lg:pl-[2px]"
         >
           <h1
-            className="text-[32px] font-helvetica ml-[98px] font-bold text-black 
+            className="text-[32px] font-helvetica ml-[125px] font-bold text-black 
                     sm:ml-[22px] text-center 
                     md:text-[48px] 
                     lg:ml-[120px]"
@@ -216,14 +216,14 @@ export default function Register() {
               </div>
 
               {/* Teks "Ingat kata sandi Anda? Masuk" dengan link hanya pada kata "Masuk" */}
-              <div className="flex flex-row items-center mt-2 ml-[70px] mb-40
+              <div className="flex flex-row items-center mt-2 ml-[70px] mb-12
                           sm:mt-2 sm:ml-16 sm:mb-24
                           md:mt-2 md:ml-16 md:mb-0
                           lg:mt-2 lg:ml-16 lg:mb-0">
                 <p className="mr-2 text-gray-600 md:mr-1 lg:mr-1">Lanjutkan ke</p>
                 <button
                   onClick={handleLoginRedirect}
-                  className="text-blue-500 text-[14px] font-semibold"
+                  className="text-blue-500 text-[12px] font-semibold"
                 >
                   Masuk
                 </button>

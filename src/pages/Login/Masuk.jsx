@@ -67,7 +67,7 @@ export default function Masuk() {
   };
 
   return (
-    <div className="flex justify-center min-h-screen bg-white mt-8 lg:mt-0">
+    <div className="flex justify-center min-h-screen bg-white mt-2 lg:mt-0">
       <div className="max-w-[1220px] mx-auto flex flex-col lg:flex-row w-full">
         <div className="flex-1 flex items-center justify-center sm:pr-2 md:pr-4 lg:pr-5 md:justify-end w-full mb-4 md:mb-0 md:order-2 relative lg:justify-end overflow-hidden">
           <img
@@ -88,7 +88,7 @@ export default function Masuk() {
                     lg:mt-[70px] lg:pl-[2px]"
         >
           <h1
-            className="text-[32px] font-helvetica ml-[98px] font-bold text-black 
+            className="text-[32px] font-helvetica ml-[135px] text-center font-bold text-black 
                       sm:ml-[22px] text-center 
                       md:text-[48px] 
                       lg:ml-[120px]"

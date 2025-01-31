@@ -5,6 +5,7 @@ import Header from "../../components/Header/Header";
 import Footer from "../../components/Footer/Footer";
 import { useNavigate } from "react-router-dom";
 import api from "../../utils/api";
+import { uploadToSupabase } from "../../components/SupabaseConfig";
 
 export default function UserProfile() {
   const [isModalOpen, setIsModalOpen] = useState(false);
@@ -101,23 +102,41 @@ export default function UserProfile() {
         return;
       }
 
-      const formData = new FormData();
-      formData.append("profile_image", file);
-
       try {
+        // Mengambil nama file dan ekstensi file
+        const fileParts = file.name.split('.').filter(Boolean);
+        const fileName = fileParts.slice(0, -1).join('.');  // Nama file tanpa ekstensi
+        const fileType = fileParts.slice(-1)[0];  // Ekstensi file
+        const timestamp = new Date().toISOString();  // Membuat timestamp untuk unik
+        const newFileName = `${fileName} ${timestamp}.${fileType}`;  // Membuat nama file baru
+
+        // Upload file ke Supabase dan dapatkan URL publik
+        const publicUrl = await uploadToSupabase(newFileName, file);
+
+        // Menyiapkan data pengguna yang akan diupdate
         const token = localStorage.getItem("token");
-        await api.patch("/api/users/profile/update", formData, {
+        const updatedUser = {
+            profile_image: publicUrl,  // Mengganti dengan URL foto yang baru
+        };
+
+        // Mengirimkan data ke server untuk diupdate
+        const response = await api.patch("/api/users/profile/update", updatedUser, {
           headers: {
             Authorization: `Bearer ${token}`,
-            "Content-Type": "multipart/form-data",
+            "Content-Type": "application/json",
           },
         });
 
-        await fetchUserData();
-        setIsModalOpen(false);
-        alert("Foto berhasil diupload");
+        if (response.status === 200) {
+          await fetchUserData();
+          setIsModalOpen(false);
+          alert("Foto berhasil diupload");
+        } else {
+          alert("Gagal update foto");
+        }
       } catch (error) {
         alert("Gagal upload foto");
+        console.error(error);
       }
     }
   };
@@ -128,11 +147,12 @@ export default function UserProfile() {
     try {
       const token = localStorage.getItem("token");
       console.log("Token:", token);
-      
+
       const data = {
         nama_lengkap: userData.nama_lengkap,
         email: userData.email,
         username: userData.username,
+        profile_image: userData.profile_image
       };
 
       if (passwordData.sandi_baru) {
@@ -195,31 +215,28 @@ export default function UserProfile() {
             <div className="w-full lg:w-[277px] border border-black mb-auto">
               <div
                 onClick={() => navigate("/")}
-                className={`p-6 border-b border-black cursor-pointer transition-colors ${
-                  activeMenu === "beranda"
+                className={`p-6 border-b border-black cursor-pointer transition-colors ${activeMenu === "beranda"
                     ? "bg-black text-white"
                     : "hover:bg-gray-100"
-                }`}
+                  }`}
               >
                 <Text className="text-lg font-bold">Beranda</Text>
               </div>
               <div
                 onClick={() => navigate("/UserProfile")}
-                className={`p-6 border-b border-black cursor-pointer transition-colors ${
-                  activeMenu === "profile"
+                className={`p-6 border-b border-black cursor-pointer transition-colors ${activeMenu === "profile"
                     ? "bg-black text-white"
                     : "hover:bg-gray-100"
-                }`}
+                  }`}
               >
                 <Text className="text-lg font-bold">Pengaturan Profil</Text>
               </div>
               <div
                 onClick={() => navigate("/Order")}
-                className={`p-6 border-b border-black cursor-pointer transition-colors ${
-                  activeMenu === "order"
+                className={`p-6 border-b border-black cursor-pointer transition-colors ${activeMenu === "order"
                     ? "bg-black text-white"
                     : "hover:bg-gray-100"
-                }`}
+                  }`}
               >
                 <Text className="text-lg font-bold">Pesanan Saya</Text>
               </div>
@@ -246,13 +263,7 @@ export default function UserProfile() {
                         onClick={() => setIsModalOpen(true)}
                       >
                         <img
-                          src={
-                            userData.profile_image instanceof File
-                              ? URL.createObjectURL(userData.profile_image)
-                              : userData.profile_image
-                              ? `http://localhost:3333${userData.profile_image}` // Tambah base URL
-                              : "/asset/image/userprofil.svg"
-                          }
+                          src={userData.profile_image}
                           alt="Profile"
                           className="w-full h-full object-cover"
                         />
@@ -314,66 +325,66 @@ export default function UserProfile() {
                         Sandi Saat Ini
                       </label>
                       <div className="relative">
-                      <input
-                        type={isPasswordVisible.sandi_saat_ini ? "text" : "password"}
-                        name="sandi_saat_ini"
-                        value={passwordData.sandi_saat_ini}
-                        onChange={handlePasswordChange}
-                        className="w-full p-2 border border-black rounded"
-                      />
-                      <button
-                        type="button"
-                        onClick={() => togglePasswordVisibility("sandi_saat_ini")}
-                        className="absolute right-2 top-2"
-                      >
-                        {isPasswordVisible.sandi_saat_ini ? "Hide" : "Show"}
-                      </button>
+                        <input
+                          type={isPasswordVisible.sandi_saat_ini ? "text" : "password"}
+                          name="sandi_saat_ini"
+                          value={passwordData.sandi_saat_ini}
+                          onChange={handlePasswordChange}
+                          className="w-full p-2 border border-black rounded"
+                        />
+                        <button
+                          type="button"
+                          onClick={() => togglePasswordVisibility("sandi_saat_ini")}
+                          className="absolute right-2 top-2"
+                        >
+                          {isPasswordVisible.sandi_saat_ini ? "Hide" : "Show"}
+                        </button>
+                      </div>
                     </div>
-                  </div>
 
                     <div>
                       <label className="block text-sm font-medium mb-1">
                         Sandi Baru
                       </label>
                       <div className="relative">
-                      <input
-                        type={isPasswordVisible.sandi_baru ? "text" : "password"}
-                        name="sandi_baru"
-                        value={passwordData.sandi_baru}
-                        onChange={handlePasswordChange}
-                        className="w-full p-2 border border-black rounded"
-                      />
-                      <button
-                        type="button"
-                        onClick={() => togglePasswordVisibility("sandi_baru")}
-                        className="absolute right-2 top-2"
-                      >
-                        {isPasswordVisible.sandi_baru ? "Hide" : "Show"}
-                      </button>
+                        <input
+                          type={isPasswordVisible.sandi_baru ? "text" : "password"}
+                          name="sandi_baru"
+                          value={passwordData.sandi_baru}
+                          onChange={handlePasswordChange}
+                          className="w-full p-2 border border-black rounded"
+                        />
+                        <button
+                          type="button"
+                          onClick={() => togglePasswordVisibility("sandi_baru")}
+                          className="absolute right-2 top-2"
+                        >
+                          {isPasswordVisible.sandi_baru ? "Hide" : "Show"}
+                        </button>
+                      </div>
                     </div>
-                  </div>
 
                     <div>
                       <label className="block text-sm font-medium mb-1">
                         Konfirmasi Sandi Baru
                       </label>
                       <div className="relative">
-                      <input
-                        type={isPasswordVisible.sandi_konfirmasi ? "text" : "password"}
-                        name="sandi_konfirmasi"
-                        value={passwordData.sandi_konfirmasi}
-                        onChange={handlePasswordChange}
-                        className="w-full p-2 border border-black rounded"
-                      />
-                      <button
-                        type="button"
-                        onClick={() => togglePasswordVisibility("sandi_konfirmasi")}
-                        className="absolute right-2 top-2"
-                      >
-                        {isPasswordVisible.sandi_konfirmasi ? "Hide" : "Show"}
-                      </button>
+                        <input
+                          type={isPasswordVisible.sandi_konfirmasi ? "text" : "password"}
+                          name="sandi_konfirmasi"
+                          value={passwordData.sandi_konfirmasi}
+                          onChange={handlePasswordChange}
+                          className="w-full p-2 border border-black rounded"
+                        />
+                        <button
+                          type="button"
+                          onClick={() => togglePasswordVisibility("sandi_konfirmasi")}
+                          className="absolute right-2 top-2"
+                        >
+                          {isPasswordVisible.sandi_konfirmasi ? "Hide" : "Show"}
+                        </button>
+                      </div>
                     </div>
-                  </div>
 
                     <Button
                       type="submit"

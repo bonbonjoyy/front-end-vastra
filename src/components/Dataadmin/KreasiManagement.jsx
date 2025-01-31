@@ -34,8 +34,8 @@ const KreasiManagement = () => {
   const handleSubmit = async (e) => {
     e.preventDefault();
     const data = new FormData();
-  
     let isDataChanged = false;
+    let imageUrl = kreasiData.image; // Default gunakan gambar yang sudah ada
   
     Object.entries(kreasiData).forEach(([key, value]) => {
       if (key !== "image" && value !== originalKreasiData[key]) {
@@ -46,12 +46,26 @@ const KreasiManagement = () => {
       }
     });
   
-    // Handle image change properly
+    // Jika ada gambar baru, upload ke Supabase
     if (kreasiData.image instanceof File) {
       isDataChanged = true;
-      data.append("image", kreasiData.image);
+
+      const file = kreasiData.image;
+      const fileParts = file.name.split('.').filter(Boolean);
+      const fileName = fileParts.slice(0, -1).join('.');  // Nama file tanpa ekstensi
+      const fileType = fileParts.slice(-1)[0];  // Ekstensi file
+      const timestamp = new Date().toISOString();  // Timestamp unik
+      const newFileName = `${fileName} ${timestamp}.${fileType}`;  // Nama file baru
+
+      try {
+        imageUrl = await uploadToSupabase(newFileName, file);
+        data.append("image", imageUrl);
+      } catch (error) {
+        console.error("Gagal mengunggah gambar ke Supabase:", error);
+        alert("Gagal mengunggah gambar");
+        return;
+      }
     } else if (kreasiData.image === null && originalKreasiData.image) {
-      // Remove image if it's set to null
       data.append("image", null);
     }
   

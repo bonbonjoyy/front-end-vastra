@@ -36,6 +36,7 @@ const GaleriManagement = () => {
     e.preventDefault();
     const data = new FormData();
     let isDataChanged = false;
+    let imageUrl = galeriData.image;
 
     Object.entries(galeriData).forEach(([key, value]) => {
       if (key !== "image" && value !== originalGaleriData[key]) {
@@ -46,9 +47,25 @@ const GaleriManagement = () => {
       }
     });
 
+    // Jika ada gambar baru, upload ke Supabase
     if (galeriData.image instanceof File) {
       isDataChanged = true;
-      data.append("image", galeriData.image);
+
+      const file = galeriData.image;
+      const fileParts = file.name.split('.').filter(Boolean);
+      const fileName = fileParts.slice(0, -1).join('.');  // Nama file tanpa ekstensi
+      const fileType = fileParts.slice(-1)[0];  // Ekstensi file
+      const timestamp = new Date().toISOString();  // Timestamp unik
+      const newFileName = `${fileName} ${timestamp}.${fileType}`;  // Nama file baru
+
+      try {
+        imageUrl = await uploadToSupabase(newFileName, file);
+        data.append("image", imageUrl);
+      } catch (error) {
+        console.error("Gagal mengunggah gambar ke Supabase:", error);
+        alert("Gagal mengunggah gambar");
+        return;
+      }
     } else if (galeriData.image === null && originalGaleriData.image) {
       data.append("image", null);
     }

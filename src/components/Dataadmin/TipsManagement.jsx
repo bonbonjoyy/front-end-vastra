@@ -1,5 +1,6 @@
 import { useState, useEffect } from "react";
 import api from "../../utils/api";
+import { uploadToSupabase } from "../../components/SupabaseConfig";
 
 const TipsManagement = () => {
   const [tips, setTips] = useState([]);
@@ -47,13 +48,28 @@ const TipsManagement = () => {
         data.append(key, value);
       }
     });
-  
-    // Handle image change properly
+
+    // Handle image upload ke Supabase jika ada perubahan
     if (tipsData.image instanceof File) {
       isDataChanged = true;
-      data.append("image", tipsData.image);
+
+      const fileParts = tipsData.image.name.split('.').filter(Boolean);
+      const fileName = fileParts.slice(0, -1).join('.'); // Nama file tanpa ekstensi
+      const fileType = fileParts.slice(-1)[0]; // Ekstensi file
+      const timestamp = new Date().toISOString(); // Timestamp unik
+      const newFileName = `${fileName}_${timestamp}.${fileType}`; // Format nama file baru
+
+      try {
+        imageUrl = await uploadToSupabase(newFileName, tipsData.image);
+      } catch (uploadError) {
+        console.error("Gagal mengunggah gambar:", uploadError);
+        alert("Gagal mengunggah gambar");
+        return;
+      }
+
+      data.append("image", imageUrl); // Pakai URL dari Supabase
     } else if (tipsData.image === null && originalTipsData.image) {
-      // Remove image if it's set to null
+      // Jika user menghapus gambar, atur null
       data.append("image", null);
     }
   

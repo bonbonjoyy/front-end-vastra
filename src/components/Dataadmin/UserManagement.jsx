@@ -2,6 +2,7 @@
 
 import { useState, useEffect } from "react";
 import api from "../../utils/api";
+import supabase from "../SupabaseConfig";
 
 const UserManagement = () => {
   const [users, setUsers] = useState([]);
