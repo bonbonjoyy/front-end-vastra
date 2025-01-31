@@ -34,9 +34,9 @@ const KreasiManagement = () => {
   const handleSubmit = async (e) => {
     e.preventDefault();
     const data = new FormData();
-  
+
     let isDataChanged = false;
-  
+
     Object.entries(kreasiData).forEach(([key, value]) => {
       if (key !== "image" && value !== originalKreasiData[key]) {
         isDataChanged = true;
@@ -45,7 +45,7 @@ const KreasiManagement = () => {
         data.append(key, value);
       }
     });
-  
+
     // Handle image change properly
     if (kreasiData.image instanceof File) {
       isDataChanged = true;
@@ -54,23 +54,23 @@ const KreasiManagement = () => {
       // Remove image if it's set to null
       data.append("image", null);
     }
-  
+
     if (!isDataChanged) {
       alert("Tidak ada perubahan data.");
       return;
     }
-  
+
     try {
       const token = localStorage.getItem("token");
       const url = kreasiData.id
         ? `/api/kreasis/${kreasiData.id}`
         : "/api/kreasis";
       const method = kreasiData.id ? "patch" : "post";
-  
+
       await api[method](url, data, {
         headers: { Authorization: `Bearer ${token}` },
       });
-  
+
       alert("Kreasi berhasil disimpan");
       fetchKreasis();
       setShowForm(false);
@@ -113,7 +113,7 @@ const KreasiManagement = () => {
     }
   };
 
-  const handleImageUpload = (e) => {
+  const handleImageUpload = async (e) => {
     const file = e.target.files[0];
     if (file) {
       if (!file.type.match(/image.*/)) {
@@ -124,13 +124,44 @@ const KreasiManagement = () => {
         alert("Ukuran file maksimal 5MB");
         return;
       }
-  
-      // Hapus URL lama sebelum membuat yang baru
-      if (kreasiData.image instanceof File) {
-        URL.revokeObjectURL(kreasiData.image);
+
+      try {
+
+        console.log("Mulai proses upload...");
+        // Mengambil nama file dan ekstensi file
+        const fileParts = file.name.split('.').filter(Boolean);
+        const fileName = fileParts.slice(0, -1).join('.');  // Nama file tanpa ekstensi
+        const fileType = fileParts.slice(-1)[0];  // Ekstensi file
+        const timestamp = new Date().toISOString();  // Membuat timestamp untuk unik
+        const newFileName = `${fileName} ${timestamp}.${fileType}`;  // Membuat nama file baru
+
+        console.log("Nama file baru:", newFileName);
+
+        // Upload file ke Supabase dan dapatkan URL publik
+        const publicUrl = await uploadToSupabase(newFileName, file);
+
+        console.log("URL yang didapat dari Supabase:", publicUrl);
+
+
+        // Hapus URL lama sebelum menyimpan yang baru
+        if (kreasiData.image instanceof File) {
+          console.log("Menghapus URL lama:", kreasiData.image);
+          URL.revokeObjectURL(kreasiData.image);
+        }
+
+        // Simpan URL publik ke state
+        setKreasiData((prevState) => ({
+          ...prevState,
+          image: publicUrl, // Simpan URL gambar, bukan file
+        }));
+
+        console.log("State kreasiData setelah update:", kreasiData);
+
+        alert("Gambar berhasil diupload!");
+      } catch (error) {
+        alert("Gagal mengunggah gambar ke Supabase");
+        console.error(error);
       }
-  
-      setKreasiData((prevState) => ({ ...prevState, image: file }));
     }
   };
 
@@ -213,8 +244,8 @@ const KreasiManagement = () => {
                         kreasiData.image instanceof File
                           ? URL.createObjectURL(kreasiData.image)
                           : kreasiData.image
-                          ? `http://localhost:3333${kreasiData.image}`
-                          : "/asset/image/kreasiplaceholder.svg"
+                            ? `http://localhost:3333${kreasiData.image}`
+                            : "/asset/image/kreasiplaceholder.svg"
                       }
                       alt="Kreasi"
                       className="w-full h-full object-cover"

@@ -36,10 +36,10 @@ const TipsManagement = () => {
 
   const handleSubmit = async (e) => {
     e.preventDefault();
-    
+
     let isDataChanged = false;
     const updatedData = {};
-  
+
     // Cek perubahan pada data (kecuali gambar)
     Object.entries(tipsData).forEach(([key, value]) => {
       if (key !== "image" && value !== originalTipsData[key]) {
@@ -49,30 +49,30 @@ const TipsManagement = () => {
         updatedData[key] = value;
       }
     });
-  
+
     // Jika gambar berubah (URL baru dari Supabase)
     if (tipsData.image !== originalTipsData.image) {
       isDataChanged = true;
       updatedData.image = tipsData.image; // URL dari Supabase
     }
-  
+
     if (!isDataChanged) {
       alert("Tidak ada perubahan data.");
       return;
     }
-  
+
     try {
       const token = localStorage.getItem("token");
       const url = tipsData.id ? `/api/tips/${tipsData.id}` : "/api/tips";
       const method = tipsData.id ? "patch" : "post";
-  
+
       await api[method](url, updatedData, {
         headers: {
           Authorization: `Bearer ${token}`,
           "Content-Type": "application/json", // Data dikirim sebagai JSON
         },
       });
-  
+
       alert("Tips berhasil disimpan");
       fetchTips();
       setShowForm(false);
@@ -121,7 +121,7 @@ const TipsManagement = () => {
 
   const handleImageUpload = async (e) => {
     const file = e.target.files[0];
-  
+
     if (file) {
       if (!file.type.match(/image.*/)) {
         alert("File harus berupa gambar");
@@ -131,7 +131,7 @@ const TipsManagement = () => {
         alert("Ukuran file maksimal 5MB");
         return;
       }
-  
+
       try {
 
         console.log("Mulai proses upload...");
@@ -143,27 +143,27 @@ const TipsManagement = () => {
         const newFileName = `${fileName} ${timestamp}.${fileType}`;  // Membuat nama file baru
 
         console.log("Nama file baru:", newFileName);
-  
+
         // Upload file ke Supabase dan dapatkan URL publik
         const publicUrl = await uploadToSupabase(newFileName, file);
 
         console.log("URL yang didapat dari Supabase:", publicUrl);
 
-  
+
         // Hapus URL lama sebelum menyimpan yang baru
         if (tipsData.image instanceof File) {
           console.log("Menghapus URL lama:", tipsData.image);
           URL.revokeObjectURL(tipsData.image);
         }
-  
+
         // Simpan URL publik ke state
         setTipsData((prevState) => ({
           ...prevState,
           image: publicUrl, // Simpan URL gambar, bukan file
         }));
-        
+
         console.log("State tipsData setelah update:", tipsData);
-  
+
         alert("Gambar berhasil diupload!");
       } catch (error) {
         alert("Gagal mengunggah gambar ke Supabase");
@@ -171,7 +171,7 @@ const TipsManagement = () => {
       }
     }
   };
-  
+
   // Reset Form
   const resetForm = () => {
     setTipsData({
@@ -200,18 +200,18 @@ const TipsManagement = () => {
           </button>
         </div>
       </div>
-  
+
       <div className="flex-1 overflow-auto p-4 sm:p-6">
         {/* Kelompokkan berdasarkan kategori */}
         {["Bahan", "Warna", "Aksesoris"].map((kategori) => {
           // Filter tips berdasarkan kategori
           const filteredTips = tips.filter((tip) => tip.kategori === kategori);
-  
+
           return (
             <div key={kategori} className="mb-8">
               {/* Header Kategori */}
               <h2 className="text-2xl font-bold mb-4">{kategori}</h2>
-  
+
               {/* Grid untuk menampilkan tips dalam kategori */}
               <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
                 {filteredTips.length === 0 ? (
@@ -257,7 +257,7 @@ const TipsManagement = () => {
           );
         })}
       </div>
-  
+
       {showForm && (
         <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4">
           <div className="bg-white rounded-lg w-full max-w-md max-h-[90vh] overflow-y-auto">
@@ -274,8 +274,8 @@ const TipsManagement = () => {
                         tipsData.image instanceof File
                           ? URL.createObjectURL(tipsData.image)
                           : tipsData.image
-                          ? `https://back-end-vastra.vercel.app${tipsData.image}`
-                          : "/asset/image/tipsplaceholder.svg"
+                            ? `https://back-end-vastra.vercel.app${tipsData.image}`
+                            : "/asset/image/tipsplaceholder.svg"
                       }
                       alt="Tips"
                       className="w-full h-full object-cover"
@@ -288,7 +288,7 @@ const TipsManagement = () => {
                     />
                   </div>
                 </div>
-  
+
                 {/* Title Field */}
                 <div>
                   <label className="block font-medium text-sm mb-1">Judul Tips</label>
@@ -301,7 +301,7 @@ const TipsManagement = () => {
                     className="w-full px-4 py-2 border border-gray-300 rounded-lg"
                   />
                 </div>
-  
+
                 {/* Category Dropdown */}
                 <div>
                   <label className="block font-medium text-sm mb-1">Kategori</label>
@@ -316,7 +316,7 @@ const TipsManagement = () => {
                     <option value="Aksesoris">Aksesoris</option>
                   </select>
                 </div>
-  
+
                 {/* Description Field */}
                 <div>
                   <label className="block font-medium text-sm mb-1">Deskripsi</label>
@@ -327,7 +327,7 @@ const TipsManagement = () => {
                     className="w-full px-4 py-2 border border-gray-300 rounded-lg"
                   />
                 </div>
-  
+
                 <div>
                   <label className="block font-medium text-sm mb-1">Urutan Tampilan</label>
                   <select
@@ -340,7 +340,7 @@ const TipsManagement = () => {
                     <option value="body">Body</option>
                   </select>
                 </div>
-  
+
                 {/* Action Buttons */}
                 <div className="flex justify-between mt-4">
                   <button
@@ -364,7 +364,7 @@ const TipsManagement = () => {
       )}
     </div>
   );
-  
+
 };
 
 export default TipsManagement;
