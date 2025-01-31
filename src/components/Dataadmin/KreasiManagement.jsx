@@ -199,7 +199,7 @@ const KreasiManagement = () => {
                 <img
                   src={
                     kreasi.image
-                      ? `http://localhost:3333${kreasi.image}`
+                      ? `https://back-end-vastra.vercel.app${kreasi.image}`
                       : "/asset/image/kreasiplaceholder.svg"
                   }
                   alt="Kreasi"
@@ -244,7 +244,7 @@ const KreasiManagement = () => {
                         kreasiData.image instanceof File
                           ? URL.createObjectURL(kreasiData.image)
                           : kreasiData.image
-                            ? `http://localhost:3333${kreasiData.image}`
+                            ? `https://back-end-vastra.vercel.app${kreasiData.image}`
                             : "/asset/image/kreasiplaceholder.svg"
                       }
                       alt="Kreasi"
