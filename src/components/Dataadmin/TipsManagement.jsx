@@ -90,7 +90,7 @@ const TipsManagement = () => {
       kategori: tips.kategori || "",
       deskripsi: tips.deskripsi || "",
       urutan: tips.urutan || "",
-      image: tips.image || null,
+      image: tipsData.image || null,
     });
     setOriginalTipsData({
       id: tips.id,
