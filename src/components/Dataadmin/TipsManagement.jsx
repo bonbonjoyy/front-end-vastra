@@ -36,26 +36,24 @@ const TipsManagement = () => {
 
   const handleSubmit = async (e) => {
     e.preventDefault();
-    const data = new FormData();
-  
+    
     let isDataChanged = false;
+    const updatedData = {};
   
+    // Cek perubahan pada data (kecuali gambar)
     Object.entries(tipsData).forEach(([key, value]) => {
       if (key !== "image" && value !== originalTipsData[key]) {
         isDataChanged = true;
       }
       if (key !== "image") {
-        data.append(key, value);
+        updatedData[key] = value;
       }
     });
   
-    // Handle image change properly
-    if (tipsData.image instanceof File) {
+    // Jika gambar berubah (URL baru dari Supabase)
+    if (tipsData.image !== originalTipsData.image) {
       isDataChanged = true;
-      data.append("image", tipsData.image);
-    } else if (tipsData.image === null && originalTipsData.image) {
-      // Remove image if it's set to null
-      data.append("image", null);
+      updatedData.image = tipsData.image; // URL dari Supabase
     }
   
     if (!isDataChanged) {
@@ -65,13 +63,14 @@ const TipsManagement = () => {
   
     try {
       const token = localStorage.getItem("token");
-      const url = tipsData.id
-        ? `/api/tips/${tipsData.id}`
-        : "/api/tips";
+      const url = tipsData.id ? `/api/tips/${tipsData.id}` : "/api/tips";
       const method = tipsData.id ? "patch" : "post";
   
-      await api[method](url, data, {
-        headers: { Authorization: `Bearer ${token}` },
+      await api[method](url, updatedData, {
+        headers: {
+          Authorization: `Bearer ${token}`,
+          "Content-Type": "application/json", // Data dikirim sebagai JSON
+        },
       });
   
       alert("Tips berhasil disimpan");
