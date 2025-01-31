@@ -65,8 +65,9 @@ const TipsManagement = () => {
       const token = localStorage.getItem("token");
       const url = tipsData.id ? `/api/tips/${tipsData.id}` : "/api/tips";
       const method = tipsData.id ? "patch" : "post";
+      const payload = tipsData.id ? updatedData : tipsData;
 
-      await api[method](url, updatedData, {
+      await api[method](url, payload, {
         headers: {
           Authorization: `Bearer ${token}`,
           "Content-Type": "application/json", // Data dikirim sebagai JSON
