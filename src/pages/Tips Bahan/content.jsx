@@ -41,10 +41,11 @@ export default function Content() {
                     >
                         {/* Gambar */}
                         <Img
-                            src={`https://back-end-vastra.vercel.app${tip.image}`}
+                            src={tip.image}
                             alt={tip.judul}
                             className="w-[100%] md:w-1/2 lg:w-[80%] h-auto object-contain mb-4 md:mb-0"
                         />
+                        console.log("URL Gambarnya:", tip.image);
                         
                         {/* Teks dan LabelView */}
                         <div className="flex flex-col items-start gap-11 md:px-5 pl-4 mb-2 lg:pl-6 lg:mb-0">

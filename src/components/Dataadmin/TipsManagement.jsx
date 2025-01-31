@@ -274,8 +274,7 @@ const TipsManagement = () => {
                         tipsData.image instanceof File
                           ? URL.createObjectURL(tipsData.image)
                           : tipsData.image
-                          ? `https://back-end-vastra.vercel.app${tipsData.image}`
-                          : "/asset/image/tipsplaceholder.svg"
+                          
                       }
                       alt="Tips"
                       className="w-full h-full object-cover"
