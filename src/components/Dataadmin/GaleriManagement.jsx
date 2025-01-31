@@ -36,7 +36,7 @@ const GaleriManagement = () => {
     e.preventDefault();
     const data = new FormData();
     let isDataChanged = false;
-    let imageUrl = galeriData.image;
+    let publicUrl = galeriData.image;
 
     Object.entries(galeriData).forEach(([key, value]) => {
       if (key !== "image" && value !== originalGaleriData[key]) {
@@ -59,8 +59,8 @@ const GaleriManagement = () => {
       const newFileName = `${fileName} ${timestamp}.${fileType}`;  // Nama file baru
 
       try {
-        imageUrl = await uploadToSupabase(newFileName, file);
-        data.append("image", imageUrl);
+        publicUrl = await uploadToSupabase(newFileName, file);
+        data.append("image", publicUrl);
       } catch (error) {
         console.error("Gagal mengunggah gambar ke Supabase:", error);
         alert("Gagal mengunggah gambar");

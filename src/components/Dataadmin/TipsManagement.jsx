@@ -60,14 +60,14 @@ const TipsManagement = () => {
       const newFileName = `${fileName}_${timestamp}.${fileType}`; // Format nama file baru
 
       try {
-        imageUrl = await uploadToSupabase(newFileName, tipsData.image);
+        publicUrl = await uploadToSupabase(newFileName, tipsData.image);
       } catch (uploadError) {
         console.error("Gagal mengunggah gambar:", uploadError);
         alert("Gagal mengunggah gambar");
         return;
       }
 
-      data.append("image", imageUrl); // Pakai URL dari Supabase
+      data.append("image", publicUrl); // Pakai URL dari Supabase
     } else if (tipsData.image === null && originalTipsData.image) {
       // Jika user menghapus gambar, atur null
       data.append("image", null);
