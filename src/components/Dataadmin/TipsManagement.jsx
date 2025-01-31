@@ -48,31 +48,13 @@ const TipsManagement = () => {
         data.append(key, value);
       }
     });
-
-    // Handle image upload ke Supabase jika ada perubahan
+  
+    // Handle image change properly
     if (tipsData.image instanceof File) {
       isDataChanged = true;
-
-      const fileParts = tipsData.image.name.split('.').filter(Boolean);
-      const fileName = fileParts.slice(0, -1).join('.'); // Nama file tanpa ekstensi
-      const fileType = fileParts.slice(-1)[0]; // Ekstensi file
-      const timestamp = new Date().toISOString(); // Timestamp unik
-      const newFileName = `${fileName}_${timestamp}.${fileType}`; // Format nama file baru
-
-      // Upload file ke Supabase dan dapatkan URL publik
-              const publicUrl = await uploadToSupabase(newFileName, file);
-
-      try {
-        publicUrl = await uploadToSupabase(newFileName, tipsData.image);
-      } catch (uploadError) {
-        console.error("Gagal mengunggah gambar:", uploadError);
-        alert("Gagal mengunggah gambar");
-        return;
-      }
-
-      data.append("image", publicUrl); // Pakai URL dari Supabase
+      data.append("image", tipsData.image);
     } else if (tipsData.image === null && originalTipsData.image) {
-      // Jika user menghapus gambar, atur null
+      // Remove image if it's set to null
       data.append("image", null);
     }
   
@@ -138,34 +120,57 @@ const TipsManagement = () => {
     }
   };
 
-  const handleImageUpload = (e) => {
+  const handleImageUpload = async (e) => {
     const file = e.target.files[0];
+  
     if (file) {
       if (!file.type.match(/image.*/)) {
         alert("File harus berupa gambar");
         return;
       }
-      if (file.size > 5 * 1024 * 1024) {
+      if (file.size > 5 * 1024 * 1024) { // Maksimal 5MB
         alert("Ukuran file maksimal 5MB");
         return;
       }
   
-      // Hapus URL lama sebelum membuat yang baru
-      if (tipsData.image instanceof File) {
-        URL.revokeObjectURL(tipsData.image);
-      }
+      try {
+        // Mengambil nama file dan ekstensi file
+        const fileParts = file.name.split('.').filter(Boolean);
+        const fileName = fileParts.slice(0, -1).join('.');  // Nama file tanpa ekstensi
+        const fileType = fileParts.slice(-1)[0];  // Ekstensi file
+        const timestamp = new Date().toISOString();  // Membuat timestamp untuk unik
+        const newFileName = `${fileName} ${timestamp}.${fileType}`;  // Membuat nama file baru
   
-      setTipsData((prevState) => ({ ...prevState, image: file }));
+        // Upload file ke Supabase dan dapatkan URL publik
+        const publicUrl = await uploadToSupabase(newFileName, file);
+  
+        // Hapus URL lama sebelum menyimpan yang baru
+        if (tipsData.image instanceof File) {
+          URL.revokeObjectURL(tipsData.image);
+        }
+  
+        // Simpan URL publik ke state
+        setTipsData((prevState) => ({
+          ...prevState,
+          image: publicUrl, // Simpan URL gambar, bukan file
+        }));
+  
+        alert("Gambar berhasil diupload!");
+      } catch (error) {
+        alert("Gagal mengunggah gambar ke Supabase");
+        console.error(error);
+      }
     }
   };
-
+  
+  // Reset Form
   const resetForm = () => {
     setTipsData({
       judul: "",
       kategori: "",
       deskripsi: "",
       urutan: "",
-      image: null,
+      image: null, // Reset image ke null
     });
     setOriginalTipsData({});
   };
