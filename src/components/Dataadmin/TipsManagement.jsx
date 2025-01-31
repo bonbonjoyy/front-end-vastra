@@ -59,6 +59,9 @@ const TipsManagement = () => {
       const timestamp = new Date().toISOString(); // Timestamp unik
       const newFileName = `${fileName}_${timestamp}.${fileType}`; // Format nama file baru
 
+      // Upload file ke Supabase dan dapatkan URL publik
+              const publicUrl = await uploadToSupabase(newFileName, file);
+
       try {
         publicUrl = await uploadToSupabase(newFileName, tipsData.image);
       } catch (uploadError) {
