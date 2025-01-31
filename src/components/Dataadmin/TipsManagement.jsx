@@ -1,6 +1,7 @@
 import { useState, useEffect } from "react";
 import api from "../../utils/api";
 import { uploadToSupabase } from "../../components/SupabaseConfig";
+import { useParams } from "react-router-dom";
 
 const TipsManagement = () => {
   const [tips, setTips] = useState([]);
@@ -133,7 +134,8 @@ const TipsManagement = () => {
       }
   
       try {
-
+        const idTip = sessionStorage.getItem("id_tip");
+        const token = localStorage.getItem("token");
         console.log("Mulai proses upload...");
         // Mengambil nama file dan ekstensi file
         const fileParts = file.name.split('.').filter(Boolean);
@@ -143,24 +145,29 @@ const TipsManagement = () => {
         const newFileName = `${fileName} ${timestamp}.${fileType}`;  // Membuat nama file baru
 
         console.log("Nama file baru:", newFileName);
-  
-        // Upload file ke Supabase dan dapatkan URL publik
+
         const publicUrl = await uploadToSupabase(newFileName, file);
 
         console.log("URL yang didapat dari Supabase:", publicUrl);
 
-  
-        // Hapus URL lama sebelum menyimpan yang baru
-        if (tipsData.image instanceof File) {
-          console.log("Menghapus URL lama:", tipsData.image);
-          URL.revokeObjectURL(tipsData.image);
+        const updatedImages = {
+          image: publicUrl,
+        };
+
+        const response = await api.patch(`/api/tips/${idTip}`, updatedImages, {
+          headers: { 
+            Authorization: `Bearer ${token}`,
+            "Content-Type": "application/json"
+          },
+        });         
+
+        if(response.status === 200) {
+          sessionStorage.clear()
+          alert('Foto TIPS Berhasil Diperbarui')
+          window.location.reload()
+        } else {
+          alert('Foto TIPS Gagal Diperbarui')
         }
-  
-        // Simpan URL publik ke state
-        setTipsData((prevState) => ({
-          ...prevState,
-          image: publicUrl, // Simpan URL gambar, bukan file
-        }));
         
         console.log("State tipsData setelah update:", tipsData);
   
@@ -221,11 +228,7 @@ const TipsManagement = () => {
                     <div key={tip.id} className="bg-white border shadow rounded-lg p-4">
                       <div className="w-full h-100 mb-4 overflow-hidden rounded-lg">
                         <img
-                          src={
-                            tip.image
-                              ? `https://back-end-vastra.vercel.app${tip.image}`
-                              : "/asset/image/tipsplaceholder.svg"
-                          }
+                          src={tip.image}
                           alt="Tips"
                           className="w-full h-[200px] object-cover"
                         />
@@ -237,7 +240,10 @@ const TipsManagement = () => {
                       </div>
                       <div className="flex gap-2 justify-center">
                         <button
-                          onClick={() => handleEdit(tip)}
+                          onClick={() => {
+                            handleEdit(tip);
+                            sessionStorage.setItem("id_tip", tip.id);
+                          }}
                           className="bg-blue-500 text-white px-4 py-2 rounded hover:bg-blue-600"
                         >
                           Edit

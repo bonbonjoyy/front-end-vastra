@@ -95,6 +95,7 @@ export default function UserProfile() {
   // Handle upload foto
   const handlePhotoUpload = async (e) => {
     const file = e.target.files[0];
+    console.log(file)
     if (file) {
       if (file.size > 1024 * 1024) {
         // 1MB limit
