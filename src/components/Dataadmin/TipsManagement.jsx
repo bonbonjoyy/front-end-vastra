@@ -222,8 +222,8 @@ const TipsManagement = () => {
                       <div className="w-full h-100 mb-4 overflow-hidden rounded-lg">
                         <img
                           src={
-                            tipsData.image
-                              ? `https://back-end-vastra.vercel.app${tipsData.image}`
+                            tip.image
+                              ? `https://back-end-vastra.vercel.app${tip.image}`
                               : "/asset/image/tipsplaceholder.svg"
                           }
                           alt="Tips"
