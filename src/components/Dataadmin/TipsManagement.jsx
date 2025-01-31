@@ -98,7 +98,7 @@ const TipsManagement = () => {
       kategori: tips.kategori || "",
       deskripsi: tips.deskripsi || "",
       urutan: tips.urutan || "",
-      image: tips.image || null,
+      image: tipsData.image || null,
     });
     setShowForm(true);
   };
