@@ -9,7 +9,7 @@ export default function Content() {
     useEffect(() => {
         const fetchData = async () => {
             try {
-                const response = await fetch("http://localhost:3333/api/tips");
+                const response = await fetch("https://back-end-vastra.vercel.app/api/tips");
                 const data = await response.json();
 
                 // Filter data with category "Warna"
@@ -41,7 +41,7 @@ export default function Content() {
                     >
                         {/* Gambar */}
                         <Img
-                            src={`http://localhost:3333${tip.image}`}
+                            src={`https://back-end-vastra.vercel.app${tip.image}`}
                             alt={tip.judul}
                             className="w-[100%] md:w-1/2 lg:w-[80%] h-auto object-contain mb-4 md:mb-0"
                         />
@@ -73,7 +73,7 @@ export default function Content() {
                         >
                             <div className="self-stretch w-full">
                                 <Img
-                                    src={`http://localhost:3333${tip.image}`}
+                                    src={`https://back-end-vastra.vercel.app${tip.image}`}
                                     alt={tip.judul}
                                     className="h-[318px] w-full object-cover sm:h-auto"
                                 />

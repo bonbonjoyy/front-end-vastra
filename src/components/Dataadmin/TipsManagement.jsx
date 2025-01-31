@@ -274,7 +274,7 @@ const TipsManagement = () => {
                         tipsData.image instanceof File
                           ? URL.createObjectURL(tipsData.image)
                           : tipsData.image
-                          ? `http://localhost:3333${tipsData.image}`
+                          ? `https://back-end-vastra.vercel.app${tipsData.image}`
                           : "/asset/image/tipsplaceholder.svg"
                       }
                       alt="Tips"
