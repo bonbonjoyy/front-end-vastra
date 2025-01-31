@@ -133,18 +133,26 @@ const TipsManagement = () => {
       }
   
       try {
+
+        console.log("Mulai proses upload...");
         // Mengambil nama file dan ekstensi file
         const fileParts = file.name.split('.').filter(Boolean);
         const fileName = fileParts.slice(0, -1).join('.');  // Nama file tanpa ekstensi
         const fileType = fileParts.slice(-1)[0];  // Ekstensi file
         const timestamp = new Date().toISOString();  // Membuat timestamp untuk unik
         const newFileName = `${fileName} ${timestamp}.${fileType}`;  // Membuat nama file baru
+
+        console.log("Nama file baru:", newFileName);
   
         // Upload file ke Supabase dan dapatkan URL publik
         const publicUrl = await uploadToSupabase(newFileName, file);
+
+        console.log("URL yang didapat dari Supabase:", publicUrl);
+
   
         // Hapus URL lama sebelum menyimpan yang baru
         if (tipsData.image instanceof File) {
+          console.log("Menghapus URL lama:", tipsData.image);
           URL.revokeObjectURL(tipsData.image);
         }
   
@@ -153,6 +161,8 @@ const TipsManagement = () => {
           ...prevState,
           image: publicUrl, // Simpan URL gambar, bukan file
         }));
+        
+        console.log("State tipsData setelah update:", tipsData);
   
         alert("Gambar berhasil diupload!");
       } catch (error) {
