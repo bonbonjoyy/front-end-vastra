@@ -26,7 +26,7 @@ export default function Kategori() {
     };
 
     return (
-        <div className="flex h-[140px] w-[390px]
+        <div className="flex h-[140px] w-full
                         sm:h-[100px] sm:w-[200px]
                         md:h-[140px] md:w-[200px]
                         lg:h-[140px] lg:w-auto">

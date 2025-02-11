@@ -6,6 +6,8 @@ import Footer from "../../components/Footer/Footer";
 import { useNavigate } from "react-router-dom";
 import api from "../../utils/api";
 import { uploadToSupabase } from "../../components/SupabaseConfig";
+import { ToastContainer, toast } from 'react-toastify';
+import 'react-toastify/dist/ReactToastify.css';
 
 export default function UserProfile() {
   const [isModalOpen, setIsModalOpen] = useState(false);
@@ -95,11 +97,11 @@ export default function UserProfile() {
   // Handle upload foto
   const handlePhotoUpload = async (e) => {
     const file = e.target.files[0];
-    console.log(file)
+    // console.log(file)
     if (file) {
       if (file.size > 1024 * 1024) {
         // 1MB limit
-        alert("Ukuran file maksimal 1MB");
+        toast.error("Ukuran file maksimal 1MB");
         return;
       }
 
@@ -131,12 +133,12 @@ export default function UserProfile() {
         if (response.status === 200) {
           await fetchUserData();
           setIsModalOpen(false);
-          alert("Foto berhasil diupload");
+          toast.success("Foto berhasil diupload");
         } else {
-          alert("Gagal update foto");
+          toast.error("Gagal update foto");
         }
       } catch (error) {
-        alert("Gagal upload foto");
+        toast.error("Gagal upload foto");
         console.error(error);
       }
     }
@@ -147,7 +149,7 @@ export default function UserProfile() {
     e.preventDefault();
     try {
       const token = localStorage.getItem("token");
-      console.log("Token:", token);
+      // console.log("Token:", token);
 
       const data = {
         nama_lengkap: userData.nama_lengkap,
@@ -179,14 +181,14 @@ export default function UserProfile() {
           sandi_baru: "",
           sandi_konfirmasi: "",
         });
-        alert("Profil berhasil diperbarui");
+        toast.success("Profil berhasil diperbarui");
         await fetchUserData();
       }
     } catch (error) {
       if (error.response?.status === 401) {
-        alert("Sandi saat ini tidak valid");
+        toast.error("Sandi saat ini tidak valid");
       } else {
-        alert(error.response?.data?.message || "Gagal memperbarui profil");
+        toast.error(error.response?.data?.message || "Gagal memperbarui profil");
       }
     }
   };
@@ -209,13 +211,15 @@ export default function UserProfile() {
     <>
       <div className="flex w-full flex-col bg-white-a700">
         <Header />
+        <ToastContainer />
         {/* Rest of your JSX remains same but update the form fields */}
         <div className="mt-[24px] mx-4 md:mx-[123px] lg:mx-[145px] mb-[133px]">
           <div className="flex gap-[40px] flex-col-reverse sm:flex-col md:flex-col lg:flex-row">
+            
             {/* Sidebar */}
-            <div className="w-full lg:w-[277px] border border-black mb-auto">
+            <div className="w-full lg:w-[277px] border border-black mb-auto md:block lg:block hidden">
               <div
-                onClick={() => navigate("/")}
+                onClick={() => navigate("/home")}
                 className={`p-6 border-b border-black cursor-pointer transition-colors ${activeMenu === "beranda"
                     ? "bg-black text-white"
                     : "hover:bg-gray-100"
@@ -444,11 +448,7 @@ export default function UserProfile() {
           <div className="bg-white rounded-lg max-w-lg w-full">
             <div className="p-4">
               <img
-                src={
-                  userData.profile_image
-                    ? `http://localhost:3333${userData.profile_image}` // Tambah base URL
-                    : "/asset/image/userprofil.svg"
-                }
+                src={userData.profile_image}
                 alt="Profile"
                 className="w-full h-auto max-h-[70vh] object-contain"
               />

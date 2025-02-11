@@ -63,14 +63,14 @@ export default function Header({ ...props }) {
 
       // Periksa apakah token sudah kadaluarsa
       if (decodedToken.exp < currentTime) {
-        console.log("Token has expired.");
+        // console.log("Token has expired.");
         return null;
       }
 
       // Kembalikan role user jika token valid
       return decodedToken.user ? decodedToken.user.role : null;
     } catch (error) {
-      console.log("Invalid token or decoding error:", error);
+      // console.log("Invalid token or decoding error:", error);
       return null;
     }
   };
@@ -475,11 +475,7 @@ export default function Header({ ...props }) {
                                         lg:w-[127px] lg:h-[147px]"
                         >
                           <img
-                             src={
-                              item.image
-                                ? `http://localhost:3333${item.image}`
-                                : "/asset/image/productplaceholder.svg"
-                            }
+                            src={item.image}
                             alt={item.title}
                             className={`w-full h-full ${
                               item.category === "aksesoris"

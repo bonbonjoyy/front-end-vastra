@@ -54,8 +54,9 @@ export default function ResetPassword() {
         </div>
 
         {/* Form Reset Password */}
-        <div className="flex flex-col items-start gap-6 w-full px-4 sm:items-center sm:mt-4 sm:pl-4 md:w-[50%] md:px-8 md:order-1 lg:mt-[70px] lg:pl-[2px]">
-          <h1 className="text-[32px] font-helvetica ml-[98px] font-bold text-black sm:ml-[22px] text-center md:text-[48px] lg:ml-[120px]">
+        <div className="flex flex-col items-start gap-6 w-full px-4 mb-40 lg:mb-0 sm:items-center sm:mt-4 sm:pl-4 md:w-[50%] md:px-8 md:order-1 lg:mt-[70px] lg:pl-[2px]">
+          <h1 className="font-helvetica ml-[40px] font-bold text-black text-center text-[32px] md:text-[48px]
+                        lg:ml-[123px] lg:mb-0">
             RESET PASSWORD
           </h1>
 

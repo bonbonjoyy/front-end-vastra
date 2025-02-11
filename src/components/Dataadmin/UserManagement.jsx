@@ -1,14 +1,16 @@
-//C:\Users\Fadhlan\Downloads\Vastra-main\frontend\src\components\Dataadmin\UserManagement.jsx
-
 import { useState, useEffect } from "react";
 import api from "../../utils/api";
-import supabase from "../SupabaseConfig";
+import { uploadToSupabase } from "../../components/SupabaseConfig";
+import { ToastContainer, toast } from 'react-toastify';
+import 'react-toastify/dist/ReactToastify.css';
 
 const UserManagement = () => {
   const [users, setUsers] = useState([]);
+  const [filteredUsers, setFilteredUsers] = useState([]);
+  const [searchTerm, setSearchTerm] = useState("");
   const [showForm, setShowForm] = useState(false);
   const [showPhotoModal, setShowPhotoModal] = useState(false);
-  const [selectedUser, setSelectedUser] = useState(null);
+  const [selectedUser , setSelectedUser ] = useState(null);
   const [selectedPhoto, setSelectedPhoto] = useState(null);
   const [formData, setFormData] = useState({
     nama_lengkap: "",
@@ -18,82 +20,148 @@ const UserManagement = () => {
     role: "user",
     profile_image: null,
   });
+  const [loading, setLoading] = useState(false); // State untuk loading
 
   useEffect(() => {
     fetchUsers();
   }, []);
 
+  useEffect(() => {
+    // Filter pengguna berdasarkan searchTerm
+    const results = users.filter(user => {
+      return (
+        user.nama_lengkap?.toLowerCase().includes(searchTerm.toLowerCase()) ||
+        user.email?.toLowerCase().includes(searchTerm.toLowerCase()) ||
+        user.username?.toLowerCase().includes(searchTerm.toLowerCase()) ||
+        user.role?.toLowerCase().includes(searchTerm.toLowerCase()) ||
+        user.id?.toString().includes(searchTerm) // Pencarian berdasarkan ID
+      );
+    });
+    setFilteredUsers(results);
+  }, [searchTerm, users]);
+
   const fetchUsers = async () => {
+    setLoading(true); // Set loading menjadi true saat memulai pengambilan data
     try {
       const token = localStorage.getItem("token");
+      // console.log("Token:", token);
       const response = await api.get("/api/users", {
         headers: {
           Authorization: `Bearer ${token}`,
         },
       });
       setUsers(response.data);
+      setFilteredUsers(response.data);
     } catch (error) {
       console.error("Error:", error);
-      alert("Gagal mengambil data pengguna");
+      toast.error("Gagal mengambil data pengguna");
+    } finally {
+      setLoading(false); // Set loading menjadi false setelah selesai
     }
+  };
+
+  const handleSortByUsername = () => {
+    const sortedUsers = [...filteredUsers].sort((a, b) => {
+      return a.username.localeCompare(b.username);
+    });
+    setFilteredUsers(sortedUsers);
   };
 
   const handleSubmit = async (e) => {
     e.preventDefault();
     const data = new FormData();
-
+  
     if (
       !formData.username ||
       !formData.email ||
-      (!selectedUser && !formData.password)
+      (!selectedUser   && !formData.password)
     ) {
       alert("Username, email dan password (untuk user baru) wajib diisi!");
       return;
     }
-
+  
     // Append data utama
     data.append("username", formData.username);
     data.append("email", formData.email);
     data.append("nama_lengkap", formData.nama_lengkap);
     data.append("role", formData.role);
-
+  
     // Append password jika tambah user baru
-    if (!selectedUser) {
+    if (!selectedUser  ) {
       data.append("kata_sandi", formData.password);
     }
-
-    // Append foto jika ada
+  
+    // Jika ada gambar baru, upload gambar
     if (formData.profile_image instanceof File) {
-      data.append("profile_image", formData.profile_image);
+      try {
+        const token = localStorage.getItem("token");
+  
+        // Mengambil nama file dan ekstensi file
+        const fileParts = formData.profile_image.name.split('.').filter(Boolean);
+        const fileName = fileParts.slice(0, -1).join('.');  // Nama file tanpa ekstensi
+        const fileType = fileParts.slice(-1)[0];  // Ekstensi file
+        const timestamp = new Date().toISOString();  // Membuat timestamp untuk unik
+        const newFileName = `${fileName} ${timestamp}.${fileType}`;  // Membuat nama file baru
+  
+        // Upload gambar ke Supabase
+        const publicUrl = await uploadToSupabase(newFileName, formData.profile_image);
+        data.append("profile_image", publicUrl); // Tambahkan URL gambar ke data
+      } catch (error) {
+        toast.error("Gagal mengunggah gambar ke Supabase");
+        console.error("Upload error:", error);
+        return;
+      }
     }
-
+  
     try {
       let response;
-      if (selectedUser) {
-        response = await api.patch(`/api/users/${selectedUser.id}`, data);
+      if (selectedUser  ) {
+        response = await api.patch(`/api/users/${selectedUser  .id}`, data);
       } else {
         response = await api.post("/api/users", data);
       }
-
+  
       if (response.data) {
         await fetchUsers();
         setShowForm(false);
-        setSelectedUser(null);
+        setSelectedUser  (null);
         resetForm();
-        alert(
-          selectedUser
+        toast.success(
+          selectedUser  
             ? "Data berhasil diperbarui"
             : "Pengguna baru berhasil ditambahkan"
         );
       }
     } catch (error) {
       console.error("Error:", error);
-      alert(error.response?.data?.message || "Gagal menyimpan data");
+      toast.error(error.response?.data?.message || "Gagal menyimpan data");
+    }
+  };
+  
+  const handlePhotoUpload = (e) => {
+    const file = e.target.files[0];
+    if (file) {
+      if (!file.type.match(/image.*/)) {
+        toast.error("File harus berupa gambar");
+        return;
+      }
+      if (file.size > 5 * 1024 * 1024) {
+        toast.error("Ukuran file maksimal 5MB");
+        return;
+      }
+  
+      // Simpan file untuk diunggah saat submit
+      setFormData((prevData) => ({
+        ...prevData,
+        profile_image: file, // Simpan file untuk diunggah saat submit
+      }));
+  
+      toast.success('File siap diupload saat menyimpan data');
     }
   };
 
   const handleEdit = (user) => {
-    setSelectedUser(user);
+    setSelectedUser (user);
     setFormData({
       nama_lengkap: user.nama_lengkap || "",
       email: user.email || "",
@@ -117,23 +185,14 @@ const UserManagement = () => {
       await fetchUsers();
     } catch (error) {
       console.error("Error:", error);
-      alert("Gagal menghapus pengguna");
+      toast.error("Gagal menghapus pengguna");
     }
   };
 
-  const handlePhotoUpload = (e) => {
-    const file = e.target.files[0];
-    if (file) {
-      if (!file.type.match(/image.*/)) {
-        alert("File harus berupa gambar");
-        return;
-      }
-      if (file.size > 5 * 1024 * 1024) {
-        alert("Ukuran file maksimal 5MB");
-        return;
-      }
-      setFormData({ ...formData, profile_image: file });
-    }
+
+  const handleViewPhoto = (user) => {
+    setSelectedPhoto(user.profile_image); // Set URL foto yang dipilih
+    setShowPhotoModal(true); // Tampilkan modal foto
   };
 
   const resetForm = () => {
@@ -149,125 +208,112 @@ const UserManagement = () => {
 
   return (
     <div className="flex flex-col h-full bg-white">
+      <ToastContainer />
       <div className="sticky top-0 bg-white z-10 shadow-sm">
         <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center p-4 sm:p-6 gap-4">
-          <h1 className="text-xl sm:text-2xl font-bold">Manajemen Akun</h1>
+          <h1 className="text-xl sm:text-2xl font-bold ml-12">Manajemen Akun </h1>
           <button
             onClick={() => {
               resetForm();
               setShowForm(true);
             }}
-            className="w-full sm:w-auto bg-blue-500 text-white px-4 py-2 rounded hover:bg-blue-600"
+            className="w-full sm:w-auto bg-blue-500 text-white px-4 py-2 mr-12 rounded hover:bg-blue-600"
           >
             Tambah Pengguna
           </button>
+          <button
+            onClick={handleSortByUsername}
+            className="w-full sm:w-auto bg-green-500 text-white px-4 py-2 mr-12 rounded hover:bg-green-600"
+          >
+            Urutkan Username A-Z
+          </button>
+          <div className="flex items-center ml-auto">
+            <input
+              type="text"
+              placeholder="Cari pengguna..."
+              value={searchTerm}
+              onChange={(e) => setSearchTerm(e.target.value)}
+              className="border-2 border-black rounded p-2"
+            />
+          </div>
         </div>
       </div>
 
       <div className="flex-1 overflow-auto p-4 sm:p-6">
-        <div className="rounded-lg border shadow overflow-x-auto">
-          <table className="min-w-full divide-y divide-gray-200">
-            <thead className="bg-gray-50">
-              <tr>
-                <th
-                  scope="col"
-                  className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider whitespace-nowrap"
-                >
-                  Foto
-                </th>
-                <th
-                  scope="col"
-                  className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider whitespace-nowrap"
-                >
-                  Nama Lengkap
-                </th>
-                <th
-                  scope="col"
-                  className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider whitespace-nowrap"
-                >
-                  Email
-                </th>
-                <th
-                  scope="col"
-                  className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider whitespace-nowrap"
-                >
-                  Username
-                </th>
-                <th
-                  scope="col"
-                  className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider whitespace-nowrap"
-                >
-                  Role
-                </th>
-                <th
-                  scope="col"
-                  className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider whitespace-nowrap"
-                >
-                  Terakhir Login
-                </th>
-                <th
-                  scope="col"
-                  className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider whitespace-nowrap"
-                >
-                  Aksi
-                </th>
-              </tr>
-            </thead>
-            <tbody className="bg-white divide-y divide-gray-200">
-              {users.map((user) => (
-                <tr key={user.id} className="hover:bg-gray-50">
-                  <td className="px-6 py-4 whitespace-nowrap">
-                    <div
-                      className="w-10 h-10 rounded-full overflow-hidden cursor-pointer"
-                      onClick={() => handleViewPhoto(user)}
-                    >
-                      <img
-                        src={
-                          user.profile_image
-                            ? `http://localhost:3333${user.profile_image}`
-                            : "/asset/image/userprofil.svg"
-                        }
-                        alt="Profile"
-                        className="w-full h-full object-cover"
-                      />
-                    </div>
-                  </td>
-                  <td className="px-6 py-4 whitespace-nowrap">
-                    {user.nama_lengkap || "-"}
-                  </td>
-                  <td className="px-6 py-4 whitespace-nowrap">{user.email}</td>
-                  <td className="px-6 py-4 whitespace-nowrap">
-                    {user.username}
-                  </td>
-                  <td className="px-6 py-4 whitespace-nowrap">
-                    {user.role === "admin" ? "Admin" : "Pengguna"}
-                  </td>
-                  <td className="px-6 py-4 whitespace-nowrap">
-                    {user.last_login
-                      ? new Date(user.last_login).toLocaleString("id-ID")
-                      : "-"}
-                  </td>
-                  <td className="px-6 py-4 whitespace-nowrap">
-                    <div className="flex gap-2">
-                      <button
-                        onClick={() => handleEdit(user)}
-                        className="bg-blue-500 text-white px-3 py-1 rounded hover:bg-blue-600"
-                      >
-                        Edit
-                      </button>
-                      <button
-                        onClick={() => handleDelete(user.id)}
-                        className="bg-red-500 text-white px-3 py-1 rounded hover:bg-red-600"
-                      >
-                        Hapus
-                      </button>
-                    </div>
-                  </td>
+        {loading ? ( // Tampilkan loading saat data sedang dimuat
+          <div className="flex justify-center items-center h-full">
+            <div className="loader">Loading...</div> {/* Ganti dengan spinner atau animasi loading sesuai kebutuhan */}
+          </div>
+        ) : (
+          <div className="rounded-lg border border-black shadow overflow-x-auto max-w-full">
+            <table className="min-w-full divide-y divide-gray-200">
+              <thead className="bg-gray-50">
+                <tr>
+                  <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                    Foto
+                  </th>
+                  <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                    Nama Lengkap
+                  </th>
+                  <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                    Email
+                  </th>
+                  <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                    Username
+                  </th>
+                  <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                    Role
+                  </th>
+                  <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                    Terakhir Login
+                  </th>
+                  <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">
+                    Aksi
+                  </th>
                 </tr>
-              ))}
-            </tbody>
-          </table>
-        </div>
+              </thead>
+              <tbody className="bg-white divide-y divide-gray-200">
+                {filteredUsers.map((user) => (
+                  <tr key={user.id} className="hover:bg-gray-50">
+                    <td className="px-6 py-4">
+                      <div className="w-12 h-12 rounded-full overflow-hidden border border-gray-300 cursor-pointer"
+                        onClick={() => handleViewPhoto(user)}>
+                        <img src={user.profile_image} alt="Profile" className="w-full h-full object-cover" />
+                      </div>
+                    </td>
+                    <td className="px-6 py-4 break-words">{user.nama_lengkap || "-"}</td>
+                    <td className="px-6 py-4 break-words">{user.email}</td>
+                    <td className="px-6 py-4 break-words">{user.username}</td>
+                    <td className="px-6 py-4 break-words">
+                      {user.role === "admin" ? "Admin" : "Pengguna"}
+                    </td>
+                    <td className="px-6 py-4 break-words">
+                      {user.last_login
+                        ? new Date(user.last_login).toLocaleString("id-ID")
+                        : "-"}
+                    </td>
+                    <td className="px-6 py-4">
+                      <div className="flex flex-col gap-2">
+                        <button
+                          onClick={() => handleEdit(user)}
+                          className="bg-blue-500 text-white px-4 py-1 rounded hover:bg-blue-600"
+                        >
+                          Edit
+                        </button>
+                        <button
+                          onClick={() => handleDelete(user.id)}
+                          className="bg-red-500 text-white px-4 py-1 rounded hover:bg-red-600"
+                        >
+                          Hapus
+                        </button>
+                      </div>
+                    </td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          </div>
+        )}
       </div>
 
       {showForm && (
@@ -275,7 +321,7 @@ const UserManagement = () => {
           <div className="bg-white rounded-lg w-full max-w-md max-h-[90vh] overflow-y-auto">
             <div className="p-6">
               <h2 className="text-xl font-bold mb-4">
-                {selectedUser ? "Edit Pengguna" : "Tambah Pengguna"}
+                {selectedUser  ? "Edit Pengguna" : "Tambah Pengguna"}
               </h2>
               <form onSubmit={handleSubmit} className="space-y-4">
                 <div className="flex items-center justify-center">
@@ -285,8 +331,6 @@ const UserManagement = () => {
                         formData.profile_image instanceof File
                           ? URL.createObjectURL(formData.profile_image)
                           : formData.profile_image
-                          ? `http://localhost:3333${formData.profile_image}`
-                          : "/asset/image/userprofil.svg"
                       }
                       alt="Profile"
                       className="w-full h-full object-cover"
@@ -323,7 +367,7 @@ const UserManagement = () => {
                   type="text"
                   placeholder="Nama Lengkap"
                   value={formData.nama_lengkap}
-                  onChange={(e) =>
+                  onChange ={(e) =>
                     setFormData({ ...formData, nama_lengkap: e.target.value })
                   }
                   className="w-full p-2 border rounded focus:outline-none focus:ring-2 focus:ring-blue-500"
@@ -336,10 +380,9 @@ const UserManagement = () => {
                   onChange={(e) =>
                     setFormData({ ...formData, email: e.target.value })
                   }
-                  disabled={selectedUser?.is_google_account}
-                  className={`w-full p-2 border rounded focus:outline-none focus:ring-2 focus:ring-blue-500 ${
-                    selectedUser?.is_google_account ? "bg-gray-100" : ""
-                  }`}
+                  disabled={selectedUser ?.is_google_account}
+                  className={`w-full p-2 border rounded focus:outline-none focus:ring-2 focus:ring-blue-500 ${selectedUser ?.is_google_account ? "bg-gray-100" : ""
+                    }`}
                 />
 
                 <input
@@ -350,13 +393,12 @@ const UserManagement = () => {
                   onChange={(e) =>
                     setFormData({ ...formData, username: e.target.value })
                   }
-                  disabled={selectedUser?.is_google_account}
-                  className={`w-full p-2 border rounded focus:outline-none focus:ring-2 focus:ring-blue-500 ${
-                    selectedUser?.is_google_account ? "bg-gray-100" : ""
-                  }`}
+                  disabled={selectedUser ?.is_google_account}
+                  className={`w-full p-2 border rounded focus:outline-none focus:ring-2 focus:ring-blue-500 ${selectedUser ?.is_google_account ? "bg-gray-100" : ""
+                    }`}
                 />
 
-                {!selectedUser && (
+                {!selectedUser  && (
                   <input
                     type="password"
                     placeholder="Password"
@@ -384,7 +426,7 @@ const UserManagement = () => {
                     type="button"
                     onClick={() => {
                       setShowForm(false);
-                      setSelectedUser(null);
+                      setSelectedUser (null);
                     }}
                     className="px-4 py-2 border rounded hover:bg-gray-100"
                   >
@@ -394,7 +436,7 @@ const UserManagement = () => {
                     type="submit"
                     className="bg-blue-500 text-white px-4 py-2 rounded hover:bg-blue-600"
                   >
-                    {selectedUser ? "Perbarui" : "Tambah"}
+                    {selectedUser  ? "Perbarui" : "Tambah"}
                   </button>
                 </div>
               </form>
@@ -408,11 +450,7 @@ const UserManagement = () => {
           <div className="bg-white rounded-lg max-w-lg w-full">
             <div className="p-4">
               <img
-                src={
-                  selectedPhoto
-                    ? `http://localhost:3333${selectedPhoto}`
-                    : "/asset/image/userprofil.svg"
-                }
+                src={selectedPhoto}
                 alt="Profile"
                 className="w-full h-auto max-h-[70vh] object-contain"
               />

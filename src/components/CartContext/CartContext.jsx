@@ -1,5 +1,7 @@
 import React, { createContext, useContext, useState, useEffect } from "react";
 import api from "../../utils/api"; // pastikan ini merujuk ke utils/api.js Anda
+import { toast, ToastContainer } from 'react-toastify'; // Impor toast dari react-toastify
+import 'react-toastify/dist/ReactToastify.css'; // Impor CSS untuk Toastify
 
 const CartContext = createContext();
 
@@ -94,11 +96,11 @@ export const CartProvider = ({ children }) => {
 
       if (response.status === 200) {
         clearCart(); // Clear the cart setelah checkout sukses
-        alert("Checkout berhasil!");
+        toast.success("Checkout berhasil!"); // Ganti alert dengan toast
       }
     } catch (error) {
       console.error("Checkout error:", error);
-      alert("Terjadi kesalahan saat melakukan checkout.");
+      toast.error("Terjadi kesalahan saat melakukan checkout."); // Ganti alert dengan toast
     }
   };
 
@@ -116,6 +118,7 @@ export const CartProvider = ({ children }) => {
       }}
     >
       {children}
+      <ToastContainer /> {/* Tambahkan ToastContainer di sini */}
     </CartContext.Provider>
   );
 };

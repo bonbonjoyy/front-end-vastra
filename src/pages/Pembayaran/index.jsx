@@ -1,8 +1,11 @@
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
 import { Img, Text, Heading, Input, useCart } from "../../components";
 import Header from "../../components/Header/Header";
 import Footer from "../../components/Footer/Footer";
 import { useNavigate } from "react-router-dom";
+import { ToastContainer, toast } from 'react-toastify';
+import 'react-toastify/dist/ReactToastify.css';
+import { jwtDecode } from "jwt-decode";
 
 export default function Pembayaran() {
   const { removeFromCart, cartItems } = useCart();
@@ -19,6 +22,25 @@ export default function Pembayaran() {
   });
   const [errors, setErrors] = useState({});
   const [showValidation, setShowValidation] = useState(false);
+
+  // Ambil email pengguna dari token saat komponen di-mount
+  useEffect(() => {
+    const token = localStorage.getItem("token");
+    if (token) {
+      try {
+        const decoded = jwtDecode(token); // Decode token menggunakan jwtDecode
+        // console.log("Decoded Payload:", decoded); // Log payload untuk debugging
+        const userEmail = decoded.user.email; // Ambil email dari payload
+        // console.log("User  Email:", userEmail); // Log email untuk debugging
+        setFormData((prevData) => ({
+          ...prevData,
+          email: userEmail || "", // Set email ke formData
+        }));
+      } catch (error) {
+        console.error("Error decoding token:", error);
+      }
+    }
+  }, []);
 
   const calculateTotal = () => {
     return cartItems.reduce(
@@ -76,12 +98,12 @@ export default function Pembayaran() {
       try {
         const token = localStorage.getItem("token"); // Ambil token dari localStorage
         if (!token) {
-          alert("Anda harus login untuk melanjutkan.");
+          toast.error("Anda harus login untuk melanjutkan.");
           navigate("/login");
           return;
         }
 
-        const response = await fetch("http://localhost:3333/api/checkout", {
+        const response = await fetch("https://back-end-vastra.vercel.app/api/checkout", {
           method: "POST",
           headers: {
             "Content-Type": "application/json",
@@ -97,20 +119,23 @@ export default function Pembayaran() {
 
         const data = await response.json();
         if (response.ok) {
-          alert("Pesanan berhasil dibuat!");
-          navigate("/Selesai");
+          toast.success("Pesanan berhasil dibuat!");
+          setTimeout(() => {
+            navigate("/Selesai");
+          }, 3000);
         } else {
-          alert(data.message || "Terjadi kesalahan saat checkout.");
+          toast.error(data.message || "Terjadi kesalahan saat checkout.");
         }
       } catch (error) {
         console.error("Checkout error:", error);
-        alert("Gagal menghubungi server. Coba lagi nanti.");
+        toast.error("Gagal menghubungi server. Coba lagi nanti.");
       }
     }
   };
 
   return (
     <>
+      <ToastContainer />
       <div className="flex w-full flex-col bg-white-a700">
         <Header />
         <div className="mt-[24px] mx-0 min-h-[806px] mb-[133px]
@@ -185,25 +210,15 @@ export default function Pembayaran() {
 
                 {/* Payment Methods */}
                 <div className="border-l border-r border-b border-black p-6">
-                  {/* <Heading
-                    as="h2"
-                    className="text-[18px] font-bold text-black mb-3"
-                  >
-                    Metode Pembayaran
-                  </Heading> */}
-                  {/* <div className="mb-6 text-gray-500 text-md">
-                    <p>Silahkan pilih metode pembayaran</p>
-                  </div> */}
-
                   <div className="space-y-4">
-                  <div
-                    onClick={() => handleCheckout("Bayar")}
-                    className="border border-black p-4 bg-black text-white hover:bg-gray-700 transition-colors cursor-pointer flex items-center justify-center"
-                  >
-                    <Text className="text-[15px] font-medium">
-                      Buat Pesanan
-                    </Text>
-                  </div>
+                    <div
+                      onClick={() => handleCheckout("Bayar")}
+                      className="border border-black p-4 bg-black text-white hover:bg-gray-700 transition-colors cursor-pointer flex items-center justify-center"
+                    >
+                      <Text className="text-[15px] font-medium">
+                        Buat Pesanan
+                      </Text>
+                    </div>
                   </div>
                 </div>
               </form>
@@ -229,11 +244,7 @@ export default function Pembayaran() {
                       <div className="flex">
                         <div className="w-[127px] h-[147px] border-r border-black">
                           <img
-                             src={
-                              item.image
-                                ? `http://localhost:3333${item.image}`
-                                : "/asset/image/productplaceholder.svg"
-                            }
+                            src={item.image}
                             alt={item.title}
                             className={`w-full h-full ${
                               item.category === "aksesoris"

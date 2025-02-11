@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import Header from '../../components/Header/Header';
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
-import { faDownload, faHeart } from '@fortawesome/free-solid-svg-icons';
+import { faDownload, faEye } from '@fortawesome/free-solid-svg-icons';
 
 function Casual() {
   const [selectedImage, setSelectedImage] = useState(null); // State for the selected image
@@ -11,9 +11,15 @@ function Casual() {
     // Fetch gallery data from the API
     const fetchGaleri = async () => {
       try {
-        const response = await fetch('http://localhost:3333/api/galeris/kategori/Harian/subCategory/Casual');
+        const response = await fetch('https://back-end-vastra.vercel.app/api/galeris/kategori/Harian/subCategory/Casual');
         const data = await response.json();
-        setGaleriImages(data); // Store gallery data in state
+        const sortedData = data.sort((a, b) => {
+          const numA = parseInt(a.title.match(/\d+/)?.[0]) || 0;
+          const numB = parseInt(b.title.match(/\d+/)?.[0]) || 0;
+          return numA - numB;
+        });
+
+        setGaleriImages(sortedData);
       } catch (error) {
         console.error('Error fetching galeri:', error);
       }
@@ -25,6 +31,52 @@ function Casual() {
   // Function to close the popup
   const closePopup = () => {
     setSelectedImage(null);
+  };
+
+  const handleDownload = async () => {
+    if (selectedImage) {
+      try {
+        // Ambil gambar sebagai Blob dari Supabase
+        const response = await fetch(selectedImage);
+        const blob = await response.blob();
+
+        // Membuat elemen gambar untuk di-render ke canvas
+        const img = new Image();
+        img.src = URL.createObjectURL(blob);
+        img.onload = () => {
+          // Buat canvas
+          const canvas = document.createElement('canvas');
+          const ctx = canvas.getContext('2d');
+
+          // Set ukuran canvas sesuai dengan gambar
+          canvas.width = img.width;
+          canvas.height = img.height;
+
+          // Gambar ulang gambar ke canvas
+          ctx.drawImage(img, 0, 0);
+
+          // Konversi ke format JPG
+          canvas.toBlob((jpgBlob) => {
+            const jpgUrl = URL.createObjectURL(jpgBlob);
+
+            // Buat elemen <a> untuk mengunduh gambar
+            const link = document.createElement('a');
+            link.href = jpgUrl;
+            link.download = `image-${Date.now()}.jpg`;
+
+            // Klik link untuk mengunduh
+            document.body.appendChild(link);
+            link.click();
+
+            // Hapus elemen setelah selesai
+            document.body.removeChild(link);
+            URL.revokeObjectURL(jpgUrl);
+          }, 'image/jpeg', 0.9); // 0.9 = kualitas JPG tinggi
+        };
+      } catch (error) {
+        console.error('Error downloading image:', error);
+      }
+    }
   };
 
   return (
@@ -39,13 +91,13 @@ function Casual() {
         <h2 className="text-5xl font-bold text-center mt-16 mb-8">Casual Fashion</h2>
 
         <p className="text-black text-justify max-w-5xl px-6 mb-4">
-        Outfit casual untuk pria adalah gaya busana yang sederhana dan santai, biasanya digunakan untuk kegiatan sehari-hari atau acara informal. Outfit casual biasanya terdiri dari bahan-bahan yang nyaman dan tidak terlalu formal, seperti kaos, celana pendek atau jeans, sepatu sneakers atau sandal, dan aksesori seperti topi atau kacamata hitam. Gaya ini sering kali dianggap sebagai gaya yang mudah dipadukan dan dapat disesuaikan dengan selera pribadi. Outfit casual juga dapat memberikan tampilan yang terbuka dan tidak terlalu kaku, serta dapat memberikan kesan yang santai dan tidak terlalu serius.          </p>
+          Outfit casual untuk pria adalah gaya busana yang sederhana dan santai, biasanya digunakan untuk kegiatan sehari-hari atau acara informal. Outfit casual biasanya terdiri dari bahan-bahan yang nyaman dan tidak terlalu formal, seperti kaos, celana pendek atau jeans, sepatu sneakers atau sandal, dan aksesori seperti topi atau kacamata hitam. Gaya ini sering kali dianggap sebagai gaya yang mudah dipadukan dan dapat disesuaikan dengan selera pribadi. Outfit casual juga dapat memberikan tampilan yang terbuka dan tidak terlalu kaku, serta dapat memberikan kesan yang santai dan tidak terlalu serius.          </p>
         <p className="text-black text-justify max-w-5xl px-6 mb-8">
-        Kelebihan casual dapat memberikan kesan yang ingin tampil santai namun tetap stylish. Dengan sedikit usaha dalam padu padan, gaya ini dapat mencerminkan kepribadian dan memberikan kenyamanan sepanjang hari.          </p>
+          Kelebihan casual dapat memberikan kesan yang ingin tampil santai namun tetap stylish. Dengan sedikit usaha dalam padu padan, gaya ini dapat mencerminkan kepribadian dan memberikan kenyamanan sepanjang hari.          </p>
       </div>
 
       <section className="mt-6 mb-16 bg-white py-10">
-        <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-5 gap-4 max-w-screen-xl mx-auto px-[145px]">
+        <div className="grid grid-cols-3 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-5 gap-4 max-w-screen-xl mx-auto px-6 lg:px-[145px]">
           {/* Loop through gallery images fetched from API */}
           {galeriImages.map((item, index) => (
             <div
@@ -55,12 +107,12 @@ function Casual() {
             >
               <div className="bg-white overflow-hidden shadow-md w-full max-w-sm">
                 <img
-                  src={`http://localhost:3333${item.image}`} // Image path from the API
+                  src={item.image} // Image path from the API
                   alt={`Casual ${index + 1}`}
-                  className="object-contain w-full h-56"
+                  className="object-contain w-full h-35 sm:h-56 lg:h-56"
                 />
                 <div className="p-4 mt-4">
-                <p className="text-center text-gray-800 font-semibold">{item.title}</p>
+                  <p className="text-center text-gray-800 font-semibold">{item.title}</p>
                 </div>
               </div>
             </div>
@@ -78,17 +130,24 @@ function Casual() {
             >
               ✖
             </button>
-            <img src={`http://localhost:3333${selectedImage}`} alt="Selected FullBody Suit" className="w-full mb-4 max-w-full" />
+            <img src={selectedImage} alt="Selected FullBody Suit" className="w-full mb-4 max-w-full" />
 
             {/* Action Buttons with Icons */}
             <div className="flex flex-col items-center justify-between bg-gray-100 p-4">
-              <a
-                href={`http://localhost:3333${selectedImage}`}
-                download
+              <button
+                onClick={handleDownload}
                 className="bg-blue-500 text-white px-4 py-2 hover:bg-blue-600 mb-2 w-full flex items-center justify-center"
               >
                 <FontAwesomeIcon icon={faDownload} className="mr-2" />
                 Download
+              </button>
+              <a
+                href={selectedImage}
+                download
+                className="bg-green-400 text-white px-4 py-2 hover:bg-green-500 mb-2 w-full flex items-center justify-center"
+              >
+                <FontAwesomeIcon icon={faEye} className="mr-2" /> {/* Ganti dengan faEye */}
+                Lihat Gambar Penuh
               </a>
             </div>
           </div>

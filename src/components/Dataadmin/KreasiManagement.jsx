@@ -1,16 +1,23 @@
 import { useState, useEffect } from "react";
 import api from "../../utils/api";
+import { uploadToSupabase } from "../../components/SupabaseConfig";
+import { ToastContainer, toast } from 'react-toastify'; // Impor ToastContainer dan toast
+import 'react-toastify/dist/ReactToastify.css'; // Impor CSS untuk toast
+import { confirmAlert } from 'react-confirm-alert'; // Impor confirmAlert
+import 'react-confirm-alert/src/react-confirm-alert.css'; // Impor CSS untuk confirmAlert
 
 const KreasiManagement = () => {
   const [kreasis, setKreasis] = useState([]);
   const [showForm, setShowForm] = useState(false);
   const [selectedKreasi, setSelectedKreasi] = useState(null);
   const [kreasiData, setKreasiData] = useState({
+    id: null,
     kulit: "",
     badan: "",
     image: null,
   });
   const [originalKreasiData, setOriginalKreasiData] = useState({}); // Add state for original data
+  const [searchQuery, setSearchQuery] = useState(""); // State untuk menyimpan query pencarian
 
   useEffect(() => {
     fetchKreasis();
@@ -19,7 +26,7 @@ const KreasiManagement = () => {
   const fetchKreasis = async () => {
     try {
       const token = localStorage.getItem("token");
-      const response = await api.get("/api/kreasis", {
+      const response = await api.get("/api/kreasis/", {
         headers: {
           Authorization: `Bearer ${token}`,
         },
@@ -27,56 +34,97 @@ const KreasiManagement = () => {
       setKreasis(response.data);
     } catch (error) {
       console.error("Error:", error);
-      alert("Gagal mengambil data kreasi");
+      toast.error("Gagal mengambil data kreasi"); // Ganti alert dengan toast
     }
   };
 
   const handleSubmit = async (e) => {
     e.preventDefault();
-    const data = new FormData();
-
+  
     let isDataChanged = false;
-
+    const updatedData = {};
+  
+    // Cek perubahan pada data (kecuali gambar)
     Object.entries(kreasiData).forEach(([key, value]) => {
       if (key !== "image" && value !== originalKreasiData[key]) {
         isDataChanged = true;
       }
       if (key !== "image") {
-        data.append(key, value);
+        updatedData[key] = value;
       }
     });
-
-    // Handle image change properly
+  
+    // Jika gambar baru diunggah
     if (kreasiData.image instanceof File) {
       isDataChanged = true;
-      data.append("image", kreasiData.image);
-    } else if (kreasiData.image === null && originalKreasiData.image) {
-      // Remove image if it's set to null
-      data.append("image", null);
+      const file = kreasiData.image;
+  
+      // Validasi file
+      if (!file.type.match(/image.*/)) {
+        toast.error("File harus berupa gambar");
+        return;
+      }
+      if (file.size > 5 * 1024 * 1024) { // Maksimal 5MB
+        toast.error("Ukuran file maksimal 5MB");
+        return;
+      }
+  
+      try {
+        const token = localStorage.getItem("token");
+  
+        // Mengambil nama file dan ekstensi file
+        const fileParts = file.name.split('.').filter(Boolean);
+        const fileName = fileParts.slice(0, -1).join('.');  // Nama file tanpa ekstensi
+        const fileType = fileParts.slice(-1)[0];  // Ekstensi file
+        const timestamp = new Date().toISOString();  // Membuat timestamp untuk unik
+        const newFileName = `${fileName} ${timestamp}.${fileType}`;  // Membuat nama file baru
+  
+        // Upload gambar ke Supabase
+        const publicUrl = await uploadToSupabase(newFileName, file);
+        // console.log('Public URL:', publicUrl);
+  
+        // Update updatedData dengan URL gambar yang baru
+        updatedData.image = publicUrl; // URL dari Supabase
+      } catch (error) {
+        toast.error("Gagal mengunggah gambar ke Supabase");
+        console.error("Error response:", error.response);
+        return;
+      }
     }
-
+  
     if (!isDataChanged) {
-      alert("Tidak ada perubahan data.");
+      toast.info("Tidak ada perubahan data.");
       return;
     }
-
+  
     try {
       const token = localStorage.getItem("token");
-      const url = kreasiData.id
-        ? `/api/kreasis/${kreasiData.id}`
-        : "/api/kreasis";
+      const url = kreasiData.id ? `/api/kreasis/${kreasiData.id}` : "/api/kreasis/";
       const method = kreasiData.id ? "patch" : "post";
-
-      await api[method](url, data, {
-        headers: { Authorization: `Bearer ${token}` },
+  
+      await api[method](url, updatedData, {
+        headers: {
+          Authorization: `Bearer ${token}`,
+          "Content-Type": "application/json",
+        },
       });
-
-      alert("Kreasi berhasil disimpan");
+  
+      toast.success("Kreasi berhasil disimpan");
       fetchKreasis();
       setShowForm(false);
     } catch (error) {
       console.error("Error:", error.response);
-      alert(error.response?.data?.message || "Gagal menyimpan data");
+      toast.error(error.response?.data?.message || "Gagal menyimpan data");
+    }
+  };
+  
+  const handleImageUpload = (e) => {
+    const file = e.target.files[0];
+    if (file) {
+      setKreasiData({
+        ...kreasiData,
+        image: file, // Simpan file untuk diunggah saat submit
+      });
     }
   };
 
@@ -97,72 +145,35 @@ const KreasiManagement = () => {
     setShowForm(true);
   };
 
-  const handleDelete = async (id) => {
-    if (!window.confirm("Yakin ingin menghapus kreasi?")) return;
-    try {
-      const token = localStorage.getItem("token");
-      await api.delete(`/api/kreasis/${id}`, {
-        headers: {
-          Authorization: `Bearer ${token}`,
+  const handleDelete = (id) => {
+    confirmAlert({
+      title: 'Konfirmasi Hapus',
+      message: 'Yakin ingin menghapus Data?',
+      buttons: [
+        {
+          label: 'Ya',
+          onClick: async () => {
+            try {
+              const token = localStorage.getItem("token");
+              await api.delete(`/api/kreasis/${id}`, {
+                headers: {
+                  Authorization: `Bearer ${token}`,
+                },
+              });
+              await fetchKreasis();
+              toast.success("Data berhasil dihapus"); // Ganti alert dengan toast
+            } catch (error) {
+              console.error("Error:", error);
+              toast.error("Gagal menghapus Data"); // Ganti alert dengan toast
+            }
+          }
         },
-      });
-      await fetchKreasis();
-    } catch (error) {
-      console.error("Error:", error);
-      alert("Gagal menghapus kreasi");
-    }
-  };
-
-  const handleImageUpload = async (e) => {
-    const file = e.target.files[0];
-    if (file) {
-      if (!file.type.match(/image.*/)) {
-        alert("File harus berupa gambar");
-        return;
-      }
-      if (file.size > 5 * 1024 * 1024) {
-        alert("Ukuran file maksimal 5MB");
-        return;
-      }
-
-      try {
-
-        console.log("Mulai proses upload...");
-        // Mengambil nama file dan ekstensi file
-        const fileParts = file.name.split('.').filter(Boolean);
-        const fileName = fileParts.slice(0, -1).join('.');  // Nama file tanpa ekstensi
-        const fileType = fileParts.slice(-1)[0];  // Ekstensi file
-        const timestamp = new Date().toISOString();  // Membuat timestamp untuk unik
-        const newFileName = `${fileName} ${timestamp}.${fileType}`;  // Membuat nama file baru
-
-        console.log("Nama file baru:", newFileName);
-
-        // Upload file ke Supabase dan dapatkan URL publik
-        const publicUrl = await uploadToSupabase(newFileName, file);
-
-        console.log("URL yang didapat dari Supabase:", publicUrl);
-
-
-        // Hapus URL lama sebelum menyimpan yang baru
-        if (kreasiData.image instanceof File) {
-          console.log("Menghapus URL lama:", kreasiData.image);
-          URL.revokeObjectURL(kreasiData.image);
+        {
+          label: 'Tidak',
+          onClick: () => toast.info("Penghapusan dibatalkan") // Notifikasi }
         }
-
-        // Simpan URL publik ke state
-        setKreasiData((prevState) => ({
-          ...prevState,
-          image: publicUrl, // Simpan URL gambar, bukan file
-        }));
-
-        console.log("State kreasiData setelah update:", kreasiData);
-
-        alert("Gambar berhasil diupload!");
-      } catch (error) {
-        alert("Gagal mengunggah gambar ke Supabase");
-        console.error(error);
-      }
-    }
+      ]
+    });
   };
 
   const resetForm = () => {
@@ -170,15 +181,28 @@ const KreasiManagement = () => {
       kulit: "",
       badan: "",
       image: null,
+      id: null, // Reset ID ke null
     });
     setOriginalKreasiData({});
   };
 
+  // Fungsi untuk memfilter kreasi berdasarkan pencarian
+  const filteredKreasis = kreasis.filter(kreasi => {
+    const query = searchQuery.toLowerCase();
+    return (
+      kreasi.id.toString().includes(query) || // Mencari berdasarkan ID
+      kreasi.kulit.toLowerCase().includes(query) || // Mencari berdasarkan kulit
+      kreasi.badan.toLowerCase().includes(query) // Mencari berdasarkan badan
+    );
+  });
+
   return (
     <div className="flex flex-col h-full bg-white">
+      <ToastContainer /> {/* Tambahkan ToastContainer di sini */}
       <div className="sticky top-0 bg-white z-10 shadow-sm">
         <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center p-4 sm:p-6 gap-4">
           <h1 className="text-xl sm:text-2xl font-bold">Manajemen Kreasi</h1>
+
           <button
             onClick={() => {
               resetForm();
@@ -188,20 +212,25 @@ const KreasiManagement = () => {
           >
             Tambah Kreasi
           </button>
+          <div className="flex items-center ml-auto">
+            <input
+              type="text"
+              placeholder="Cari berdasarkan ID, Kulit, atau Badan"
+              value={searchQuery}
+              onChange={(e) => setSearchQuery(e.target.value)}
+              className="border-2 border-black rounded-md p-2"
+            />
+          </div>
         </div>
       </div>
 
       <div className="flex-1 overflow-auto p-4 sm:p-6">
         <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
-          {kreasis.map((kreasi) => (
+          {filteredKreasis.map((kreasi) => (
             <div key={kreasi.id} className="bg-white border shadow rounded-lg p-4">
               <div className="w-full h-100 mb-4 overflow-hidden rounded-lg">
                 <img
-                  src={
-                    kreasi.image
-                      ? `https://back-end-vastra.vercel.app${kreasi.image}`
-                      : "/asset/image/kreasiplaceholder.svg"
-                  }
+                  src={kreasi.image}
                   alt="Kreasi"
                   className="w-full h-full object-cover"
                 />
@@ -244,8 +273,6 @@ const KreasiManagement = () => {
                         kreasiData.image instanceof File
                           ? URL.createObjectURL(kreasiData.image)
                           : kreasiData.image
-                            ? `https://back-end-vastra.vercel.app${kreasiData.image}`
-                            : "/asset/image/kreasiplaceholder.svg"
                       }
                       alt="Kreasi"
                       className="w-full h-full object-cover"

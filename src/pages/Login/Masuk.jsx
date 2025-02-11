@@ -6,6 +6,8 @@ import { useForm } from "react-hook-form";
 import api from "../../utils/api";
 import { GoogleOAuthProvider, GoogleLogin } from "@react-oauth/google";
 import { jwtDecode } from "jwt-decode";
+import { toast, ToastContainer } from 'react-toastify'; // Impor ToastContainer dan toast
+import 'react-toastify/dist/ReactToastify.css'; // Impor CSS untuk toast
 
 export default function Masuk() {
   const [showPassword, setShowPassword] = useState(false);
@@ -39,7 +41,7 @@ export default function Masuk() {
       }
     } catch (error) {
       console.error("Login error:", error);
-      alert(
+      toast.error(
         error.response?.data?.message || "Email/Username atau Kata Sandi salah"
       );
     }
@@ -57,17 +59,17 @@ export default function Masuk() {
         if (response.data.user.role === "admin") {
           navigate("/admin");
         } else {
-          navigate("/?source=login");
+          navigate("/home");
         }
       }
     } catch (error) {
       console.error("Google login error:", error);
-      alert("Gagal login dengan Google");
+      toast.error("Gagal login dengan Google");
     }
   };
 
   return (
-    <div className="flex justify-center min-h-screen bg-white mt-2 lg:mt-0">
+    <div className="flex justify-center min-h-screen bg-white lg:mt-0">
       <div className="max-w-[1220px] mx-auto flex flex-col lg:flex-row w-full">
         <div className="flex-1 flex items-center justify-center sm:pr-2 md:pr-4 lg:pr-5 md:justify-end w-full mb-4 md:mb-0 md:order-2 relative lg:justify-end overflow-hidden">
           <img
@@ -98,7 +100,7 @@ export default function Masuk() {
 
           <form
             onSubmit={handleSubmit(onSubmit)}
-            className="flex flex-col items-start gap-4 w-full 
+            className="flex flex-col items-start mb-8 lg:mb-0 gap-4 w-full 
                       sm:pl-4 
                       md:w-[396px] md:ml-[120px] 
                       lg:w-[396px] lg:ml-[120px]"
@@ -189,7 +191,7 @@ export default function Masuk() {
                   <GoogleLogin
                     onSuccess={handleGoogleSuccess}
                     onError={() => {
-                      console.log("Login Failed");
+                      // console.log("Login Failed");
                     }}
                     useOneTap
                   />
@@ -206,6 +208,7 @@ export default function Masuk() {
               </Link>
             </div>
           </form>
+          <ToastContainer />
         </div>
       </div>
     </div>

@@ -1,20 +1,24 @@
 import { useState, useEffect } from "react";
 import api from "../../utils/api";
 import { uploadToSupabase } from "../../components/SupabaseConfig";
-import { useParams } from "react-router-dom";
+import { ToastContainer, toast } from 'react-toastify';
+import 'react-toastify/dist/ReactToastify.css';
+import { confirmAlert } from 'react-confirm-alert'; // Impor confirmAlert
+import 'react-confirm-alert/src/react-confirm-alert.css'; // Impor CSS untuk confirmAlert
 
 const TipsManagement = () => {
   const [tips, setTips] = useState([]);
   const [showForm, setShowForm] = useState(false);
   const [selectedTips, setSelectedTips] = useState(null);
   const [tipsData, setTipsData] = useState({
+    id: null,
     judul: "",
     kategori: "",
     deskripsi: "",
     urutan: "",
     image: null,
   });
-  const [originalTipsData, setOriginalTipsData] = useState({}); // Add state for original data
+  const [originalTipsData, setOriginalTipsData] = useState({});
 
   useEffect(() => {
     fetchTips();
@@ -23,7 +27,7 @@ const TipsManagement = () => {
   const fetchTips = async () => {
     try {
       const token = localStorage.getItem("token");
-      const response = await api.get("/api/tips", {
+      const response = await api.get("/api/tips/", {
         headers: {
           Authorization: `Bearer ${token}`,
         },
@@ -31,13 +35,13 @@ const TipsManagement = () => {
       setTips(response.data);
     } catch (error) {
       console.error("Error:", error);
-      alert("Gagal mengambil data Tips");
+      toast.error("Gagal mengambil data Tips");
     }
   };
 
   const handleSubmit = async (e) => {
     e.preventDefault();
-    
+  
     let isDataChanged = false;
     const updatedData = {};
   
@@ -51,35 +55,77 @@ const TipsManagement = () => {
       }
     });
   
-    // Jika gambar berubah (URL baru dari Supabase)
-    if (tipsData.image !== originalTipsData.image) {
+    // Jika gambar baru diunggah
+    if (tipsData.image instanceof File) {
       isDataChanged = true;
-      updatedData.image = tipsData.image; // URL dari Supabase
+      const file = tipsData.image;
+  
+      // Validasi file
+      if (!file.type.match(/image.*/)) {
+        toast.error("File harus berupa gambar");
+        return;
+      }
+      if (file.size > 5 * 1024 * 1024) { // Maksimal 5MB
+        toast.error("Ukuran file maksimal 5MB");
+        return;
+      }
+  
+      try {
+        const token = localStorage.getItem("token");
+  
+        // Mengambil nama file dan ekstensi file
+        const fileParts = file.name.split('.').filter(Boolean);
+        const fileName = fileParts.slice(0, -1).join('.');  // Nama file tanpa ekstensi
+        const fileType = fileParts.slice(-1)[0];  // Ekstensi file
+        const timestamp = new Date().toISOString();  // Membuat timestamp untuk unik
+        const newFileName = `${fileName} ${timestamp}.${fileType}`;  // Membuat nama file baru
+  
+        // Upload gambar ke Supabase
+        const imageUrl = await uploadToSupabase(newFileName, file);
+        // console.log("Uploaded image URL:", imageUrl);
+  
+        // Update updatedData dengan URL gambar yang baru
+        updatedData.image = imageUrl; // URL dari Supabase
+      } catch (error) {
+        toast.error("Gagal mengunggah gambar ke Supabase");
+        console.error("Error response:", error.response);
+        return;
+      }
     }
   
     if (!isDataChanged) {
-      alert("Tidak ada perubahan data.");
+      toast.info("Tidak ada perubahan data.");
       return;
     }
   
     try {
       const token = localStorage.getItem("token");
-      const url = tipsData.id ? `/api/tips/${tipsData.id}` : "/api/tips";
+      const url = tipsData.id ? `/api/tips/${tipsData.id}` : "/api/tips/";
       const method = tipsData.id ? "patch" : "post";
   
       await api[method](url, updatedData, {
         headers: {
           Authorization: `Bearer ${token}`,
-          "Content-Type": "application/json", // Data dikirim sebagai JSON
+          "Content-Type": "application/json",
         },
       });
   
-      alert("Tips berhasil disimpan");
+      toast.success("Tips berhasil disimpan");
       fetchTips();
       setShowForm(false);
     } catch (error) {
       console.error("Error:", error.response);
-      alert(error.response?.data?.message || "Gagal menyimpan data");
+      toast.error(error.response?.data?.message || "Gagal menyimpan data");
+    }
+  };
+  
+  const handleImageUpload = (e) => {
+    const file = e.target.files[0];
+    if (file) {
+      setTipsData({
+        ...tipsData,
+        image: file, // Simpan file untuk diunggah saat submit
+      });
     }
   };
 
@@ -91,7 +137,7 @@ const TipsManagement = () => {
       kategori: tips.kategori || "",
       deskripsi: tips.deskripsi || "",
       urutan: tips.urutan || "",
-      image: tipsData.image || null,
+      image: tips.image || null,
     });
     setOriginalTipsData({
       id: tips.id,
@@ -99,86 +145,43 @@ const TipsManagement = () => {
       kategori: tips.kategori || "",
       deskripsi: tips.deskripsi || "",
       urutan: tips.urutan || "",
-      image: tipsData.image || null,
+      image: tips.image || null,
     });
     setShowForm(true);
   };
 
-  const handleDelete = async (id) => {
-    if (!window.confirm("Yakin ingin menghapus tips?")) return;
-    try {
-      const token = localStorage.getItem("token");
-      await api.delete(`/api/tips/${id}`, {
-        headers: {
-          Authorization: `Bearer ${token}`,
+  const handleDelete = (id) => {
+    confirmAlert({
+      title: 'Konfirmasi Hapus',
+      message: 'Yakin ingin menghapus tips?',
+      buttons: [
+        {
+          label: 'Ya',
+          onClick: async () => {
+            try {
+              const token = localStorage.getItem("token");
+              await api.delete(`/api/tips/${id}`, {
+                headers: {
+                  Authorization: `Bearer ${token}`,
+                },
+              });
+              await fetchTips();
+              toast.success("Tips berhasil dihapus");
+            } catch (error) {
+              console.error("Error:", error);
+              toast.error("Gagal menghapus tips");
+            }
+          }
         },
-      });
-      await fetchTips();
-    } catch (error) {
-      console.error("Error:", error);
-      alert("Gagal menghapus tips");
-    }
-  };
-
-  const handleImageUpload = async (e) => {
-    const file = e.target.files[0];
-  
-    if (file) {
-      if (!file.type.match(/image.*/)) {
-        alert("File harus berupa gambar");
-        return;
-      }
-      if (file.size > 5 * 1024 * 1024) { // Maksimal 5MB
-        alert("Ukuran file maksimal 5MB");
-        return;
-      }
-  
-      try {
-        const idTip = sessionStorage.getItem("id_tip");
-        const token = localStorage.getItem("token");
-        console.log("Mulai proses upload...");
-        // Mengambil nama file dan ekstensi file
-        const fileParts = file.name.split('.').filter(Boolean);
-        const fileName = fileParts.slice(0, -1).join('.');  // Nama file tanpa ekstensi
-        const fileType = fileParts.slice(-1)[0];  // Ekstensi file
-        const timestamp = new Date().toISOString();  // Membuat timestamp untuk unik
-        const newFileName = `${fileName} ${timestamp}.${fileType}`;  // Membuat nama file baru
-
-        console.log("Nama file baru:", newFileName);
-
-        const publicUrl = await uploadToSupabase(newFileName, file);
-
-        console.log("URL yang didapat dari Supabase:", publicUrl);
-
-        const updatedImages = {
-          image: publicUrl,
-        };
-
-        const response = await api.patch(`/api/tips/${idTip}`, updatedImages, {
-          headers: { 
-            Authorization: `Bearer ${token}`,
-            "Content-Type": "application/json"
-          },
-        });         
-
-        if(response.status === 200) {
-          sessionStorage.clear()
-          alert('Foto TIPS Berhasil Diperbarui')
-          window.location.reload()
-        } else {
-          alert('Foto TIPS Gagal Diperbarui')
+        {
+          label: 'Tidak',
+          onClick: () => toast.info("Penghapusan dibatalkan") // Notifikasi
         }
-        
-        console.log("State tipsData setelah update:", tipsData);
-  
-        alert("Gambar berhasil diupload!");
-      } catch (error) {
-        alert("Gagal mengunggah gambar ke Supabase");
-        console.error(error);
-      }
-    }
+      ]
+    });
   };
-  
+
+
   // Reset Form
   const resetForm = () => {
     setTipsData({
@@ -186,13 +189,15 @@ const TipsManagement = () => {
       kategori: "",
       deskripsi: "",
       urutan: "",
-      image: null, // Reset image ke null
+      image: null,
+      id: null,
     });
     setOriginalTipsData({});
   };
 
   return (
     <div className="flex flex-col h-full bg-white">
+      <ToastContainer />
       <div className="sticky top-0 bg-white z-10 shadow-sm">
         <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center p-4 sm:p-6 gap-4">
           <h1 className="text-xl sm:text-2xl font-bold">Manajemen Tips</h1>
@@ -207,19 +212,14 @@ const TipsManagement = () => {
           </button>
         </div>
       </div>
-  
+
       <div className="flex-1 overflow-auto p-4 sm:p-6">
-        {/* Kelompokkan berdasarkan kategori */}
         {["Bahan", "Warna", "Aksesoris"].map((kategori) => {
-          // Filter tips berdasarkan kategori
           const filteredTips = tips.filter((tip) => tip.kategori === kategori);
-  
+
           return (
             <div key={kategori} className="mb-8">
-              {/* Header Kategori */}
               <h2 className="text-2xl font-bold mb-4">{kategori}</h2>
-  
-              {/* Grid untuk menampilkan tips dalam kategori */}
               <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
                 {filteredTips.length === 0 ? (
                   <p className="text-sm text-gray-500">Tidak ada tips untuk kategori ini.</p>
@@ -236,7 +236,7 @@ const TipsManagement = () => {
                       <div className="mb-4">
                         <h3 className="text-lg font-semibold">Judul: {tip.judul || "Tidak Ada"}</h3>
                         <p className="text-sm font-semibold">Kategori: {tip.kategori || "Tidak Ada"}</p>
-                        <p className="text-sm"><b>Deskripsi</b>: {tip.deskripsi || "Tidak Ada"}</p>
+                        <p className="text-sm"><b> Deskripsi</b>: {tip.deskripsi || "Tidak Ada"}</p>
                       </div>
                       <div className="flex gap-2 justify-center">
                         <button
@@ -263,7 +263,7 @@ const TipsManagement = () => {
           );
         })}
       </div>
-  
+
       {showForm && (
         <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4">
           <div className="bg-white rounded-lg w-full max-w-md max-h-[90vh] overflow-y-auto">
@@ -272,7 +272,6 @@ const TipsManagement = () => {
                 {selectedTips ? "Edit Tips" : "Tambah Tips"}
               </h2>
               <form onSubmit={handleSubmit} className="space-y-4">
-                {/* Image Upload Section */}
                 <div className="flex items-center justify-center">
                   <div className="relative w-24 h-24">
                     <img
@@ -280,7 +279,6 @@ const TipsManagement = () => {
                         tipsData.image instanceof File
                           ? URL.createObjectURL(tipsData.image)
                           : tipsData.image
-                          
                       }
                       alt="Tips"
                       className="w-full h-full object-cover"
@@ -293,8 +291,7 @@ const TipsManagement = () => {
                     />
                   </div>
                 </div>
-  
-                {/* Title Field */}
+
                 <div>
                   <label className="block font-medium text-sm mb-1">Judul Tips</label>
                   <input
@@ -306,8 +303,7 @@ const TipsManagement = () => {
                     className="w-full px-4 py-2 border border-gray-300 rounded-lg"
                   />
                 </div>
-  
-                {/* Category Dropdown */}
+
                 <div>
                   <label className="block font-medium text-sm mb-1">Kategori</label>
                   <select
@@ -321,8 +317,7 @@ const TipsManagement = () => {
                     <option value="Aksesoris">Aksesoris</option>
                   </select>
                 </div>
-  
-                {/* Description Field */}
+
                 <div>
                   <label className="block font-medium text-sm mb-1">Deskripsi</label>
                   <textarea
@@ -332,7 +327,7 @@ const TipsManagement = () => {
                     className="w-full px-4 py-2 border border-gray-300 rounded-lg"
                   />
                 </div>
-  
+
                 <div>
                   <label className="block font-medium text-sm mb-1">Urutan Tampilan</label>
                   <select
@@ -345,8 +340,7 @@ const TipsManagement = () => {
                     <option value="body">Body</option>
                   </select>
                 </div>
-  
-                {/* Action Buttons */}
+
                 <div className="flex justify-between mt-4">
                   <button
                     type="button"
@@ -369,7 +363,6 @@ const TipsManagement = () => {
       )}
     </div>
   );
-  
 };
 
 export default TipsManagement;

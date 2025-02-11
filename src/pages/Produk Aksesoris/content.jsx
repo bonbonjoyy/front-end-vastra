@@ -45,7 +45,7 @@ const ProductCard = ({ image, title, price, onClick, category }) => {
 export default function Content() {
   const navigate = useNavigate();
   const location = useLocation();
-  const category = location.pathname.split("/").pop().toLowerCase();
+  const category = location.pathname.split("/").pop();
   const [products, setProducts] = useState([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
@@ -63,7 +63,13 @@ export default function Content() {
     navigate(`/Produk-Kami/${category}/${id}`);
   };
 
-  if (loading) return <div>Loading...</div>;
+  if (loading) {
+    return (
+      <p className="flex justify-center items-center h-screen m-0">
+        Sedang Memuat Data...
+      </p>
+    );
+  }
 
   return (
     <div className="px-4 sm:px-8 md:px-16 lg:px-[120px]">
@@ -72,7 +78,7 @@ export default function Content() {
           {products.map((product) => (
             <div key={product.id}>
               <ProductCard
-                  image={product.image ? `http://localhost:3333${product.image}` : "/default-placeholder.png"} 
+                  image={product.image} 
                   title={product.nama_product}
                   price={`Rp ${new Intl.NumberFormat('id-ID').format(product.harga)}`}
                   category={category}

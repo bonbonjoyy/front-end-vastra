@@ -93,7 +93,7 @@ export default function Home() {
           </div>
         </div>
 
-        <div className="flex flex-col md:flex-row w-full" id="gallery-section">
+        <div className="flex flex-row md:flex-row w-full" id="gallery-section">
           {/* Set Gambar Pertama */}
           <div className="flex flex-col w-full md:w-1/2">
         <div className="relative group">
@@ -101,10 +101,10 @@ export default function Home() {
             <Img
               src="asset/image/home1.svg"
               alt="Banner Galeri"
-              className="h-[400px] w-full object-cover transition duration-300 ease-in-out transform group-hover:brightness-200"
+              className="h-[250px] md:[300px] lg:h-[400px] w-full object-cover transition duration-300 ease-in-out transform group-hover:brightness-200"
             />
             <div className="absolute inset-0 flex items-center justify-center transition-opacity duration-300 ease-in-out opacity-100 group-hover:opacity-0">
-              <Text className="text-white text-2xl font-normal">Galeri</Text>
+              <Text className="text-white text:l md:text:xl lg:text-2xl font-normal">Galeri</Text>
             </div>
           </RouterLink>
         </div>
@@ -114,10 +114,10 @@ export default function Home() {
                 <Img
                   src="asset/image/home2.svg"
                   alt="Banner Trend"
-                  className="h-[400px] w-full object-cover transition duration-300 ease-in-out transform group-hover:brightness-200"
+                  className="h-[250px] md:[300px] lg:h-[400px] w-full object-cover transition duration-300 ease-in-out transform group-hover:brightness-200"
                 />
                 <div className="absolute inset-0 flex items-center justify-center transition-opacity duration-300 ease-in-out opacity-100 group-hover:opacity-0">
-                  <Text className="text-white text-2xl font-normal">
+                  <Text className="text-white text:l md:text:xl lg:text-2xl font-normal">
                     Kreasi
                   </Text>
                 </div>
@@ -132,10 +132,10 @@ export default function Home() {
                 <Img
                   src="asset/image/home3.svg"
                   alt="Banner Tips"
-                  className="h-[400px] w-full object-cover transition duration-300 ease-in-out transform group-hover:brightness-200"
+                  className="h-[250px] md:[300px] lg:h-[400px] w-full object-cover transition duration-300 ease-in-out transform group-hover:brightness-200"
                 />
                 <div className="absolute inset-0 flex items-center justify-center transition-opacity duration-300 ease-in-out opacity-100 group-hover:opacity-0">
-                  <Text className="text-white text-2xl font-normal">
+                  <Text className="text-white text:l md:text:xl lg:text-2xl font-normal">
                     Tips
                   </Text>
                 </div>
@@ -146,10 +146,10 @@ export default function Home() {
                 <Img
                   src="asset/image/home4.svg"
                   alt="Banner Produk Kami"
-                  className="h-[400px] w-full object-cover transition duration-300 ease-in-out transform group-hover:brightness-200"
+                  className="h-[250px] md:[300px] lg:h-[400px] w-full object-cover transition duration-300 ease-in-out transform group-hover:brightness-200"
                 />
                 <div className="absolute inset-0 flex items-center justify-center transition-opacity duration-300 ease-in-out opacity-100 group-hover:opacity-0">
-                  <Text className="text-white text-2xl font-normal">
+                  <Text className="text-white text:l md:text:xl lg:text-2xl font-normal">
                     Produk Kami
                   </Text>
                 </div>

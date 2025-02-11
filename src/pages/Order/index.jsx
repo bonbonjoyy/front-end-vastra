@@ -4,32 +4,34 @@ import Header from "../../components/Header/Header";
 import Footer from "../../components/Footer/Footer";
 import { useNavigate } from "react-router-dom";
 import api from "../../utils/api";
+import { toast, ToastContainer } from 'react-toastify'; // Impor ToastContainer dan toast
+import 'react-toastify/dist/ReactToastify.css'; // Impor CSS untuk toast
 
 export default function Order() {
     const [activeMenu, setActiveMenu] = useState("order");
-    const [orders, setOrders] = useState([]); // State untuk menyimpan data pesanan
-    const [isLoading, setIsLoading] = useState(true); // Loading state
+    const [orders, setOrders] = useState([]);
+    const [isLoading, setIsLoading] = useState(true);
     const navigate = useNavigate();
     
     useEffect(() => {
       const token = localStorage.getItem("token");
       if (!token) {
+        toast.error("Anda harus login terlebih dahulu.");
         navigate("/login");
         return;
       }
-      fetchOrders(); // Panggil fungsi untuk mengambil data pesanan
-      const intervalId = setInterval(fetchOrders, 60000); // Ambil data ulang setiap 1 menit
+      fetchOrders();
+      const intervalId = setInterval(fetchOrders, 60000);
     
-      return () => clearInterval(intervalId); // Bersihkan interval saat komponen di-unmount
+      return () => clearInterval(intervalId);
     }, []);
     
-    // Fungsi untuk mengambil daftar pesanan
     const fetchOrders = async () => {
-        setIsLoading(true); // Set loading true saat mulai fetch
+        setIsLoading(true);
         try {
           const token = localStorage.getItem("token");
           if (!token) {
-            alert("Token hilang, silakan login kembali.");
+            toast.error("Token hilang, silakan login kembali.");
             navigate("/login");
             return;
           }
@@ -39,11 +41,12 @@ export default function Order() {
             });
       
           setOrders(response.data);
+        } catch (error) {
+          toast.error("Gagal mengambil data pesanan.");
         } finally {
-          setIsLoading(false); // Set loading false setelah proses selesai
+          setIsLoading(false);
         }
       };
-      
 
   return (
     <>
@@ -51,8 +54,7 @@ export default function Order() {
         <Header />
         <div className="mt-[24px] mx-4 md:mx-[123px] lg:mx-[145px] mb-[133px]">
           <div className="flex gap-[40px] flex-col-reverse sm:flex-col md:flex-col lg:flex-row">
-            {/* Sidebar */}
-            <div className="w-full lg:w-[277px] border border-black mb-auto">
+            <div className="w-full lg:w-[277px] border border-black mb-auto md:block lg:block hidden">
               <div
                 onClick={() => navigate("/")}
                 className={`p-6 border-b border-black cursor-pointer transition-colors ${
@@ -80,6 +82,7 @@ export default function Order() {
               <div
                 onClick={() => {
                   localStorage.removeItem("token");
+                  toast.info("Anda telah logout.");
                   navigate("/login");
                 }}
                 className="p-6 cursor-pointer hover:bg-gray-100"
@@ -88,13 +91,11 @@ export default function Order() {
               </div>
             </div>
 
-            {/* Orders Content */}
             <div className="flex-1">
               <div className="border border-black p-6">
                 <Heading as="h2" className="text-xl font-bold mb-6">
                   Pesanan Saya
                 </Heading>
-                {/* Loading or Daftar Pesanan */}
                 {isLoading ? (
                   <div className="text-center text-gray-500">Loading...</div>
                 ) : orders.length > 0 ? (
@@ -137,6 +138,10 @@ export default function Order() {
             </div>
           </div>
         </div>
+        
+        {/* Tambahkan ToastContainer di sini */}
+        <ToastContainer position="top-right" autoClose={3000} />
+
         <Footer />
       </div>
     </>

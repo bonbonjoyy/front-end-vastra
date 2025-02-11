@@ -11,8 +11,8 @@ const Footer = ({ className, ...props }) => {
     return (
         <footer {...props} className={`${className} flex flex-col bg-black`}>
             <div className="h-[2px] w-full self-stretch" />
-                <div className="py-[46px] mt-[-2px] relative flex justify-center self-stretch md:py-5">
-                    <div className="container-xs w-full mb-1.5 flex flex-col justify-between mb-4
+                <div className="py-[26px] md:py-[36px] lg:py-[46px] mt-[-2px] relative flex justify-center self-stretch md:py-5">
+                    <div className="container-xs w-full mb-1.5 flex flex-row justify-between
                                     sm:px-6
                                     md:px-5
                                     lg:flex-row lg:px-20">
@@ -20,7 +20,7 @@ const Footer = ({ className, ...props }) => {
                     {/* Tautan Penting */}
                     <div
                         className="w-[30%] flex flex-col items-start 
-                                    sm:w-full pl-12 pr-8 pb-8
+                                    sm:w-full pl-10 pr-8 pb-8
                                     md:w-[50%] md:pl-8 
                                     lg:pl-[65px]"
                         >
@@ -28,7 +28,7 @@ const Footer = ({ className, ...props }) => {
                             <li>
                                 <Text 
                                 as="p" 
-                                className="text-[20px] font-bold text-white mt-8 whitespace-nowrap 
+                                className="text-[18px] font-bold text-white mt-8 whitespace-nowrap 
                                             sm:text-[20px] 
                                             md:text-[16px]
                                             lg:text-[25px]"
@@ -92,16 +92,16 @@ const Footer = ({ className, ...props }) => {
                     </div>
 
                     <div
-                        className="w-[30%] flex flex-col items-start 
-                                    sm:w-full pl-12 
+                        className="flex flex-col items-start 
+                                    sm:w-full pr-10 
                                     md:w-[50%] md:pl-8 
-                                    lg:pl-[10px]"
+                                    lg:pl-[10px] lg:pr-0"
                         >
                         <ul>
                             <li>
                                 <Text 
                                 as="p" 
-                                className="text-[20px] font-bold text-white mt-8 whitespace-nowrap
+                                className="text-[18px] font-bold text-white mt-8 whitespace-nowrap
                                             sm:text-[20px]
                                             md:text-[16px] 
                                             lg:text-[25px]"
@@ -166,10 +166,10 @@ const Footer = ({ className, ...props }) => {
             <div className="flex justify-center items-center py-[20px]">
                 <Heading
                     as="h6"
-                    className="text-[14px] font-bold text-white mt-[18px] mb-[10px] 
+                    className="text-[14px] font-bold text-white mb-[10px] 
                     sm:text-[14px] sm:mt-[18px] sm:mb-[10px]
                     md:text-[14px] md:mt-[38px] md:mb-[10px]
-                    lg:text-[18px] lg:mt-[38px] lg:mb-[10px]"
+                    lg:text-[18px] lg:mt-[5px] lg:mb-[10px]"
                 >
                     Copyright © 20242020 All rights reserved
                 </Heading>

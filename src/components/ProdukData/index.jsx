@@ -77,7 +77,7 @@ export const products = {
       category: "jaket",
     },
   ],
-  kaos: [
+  Kaos: [
     {
       id: "kaos-1",
       image: "/asset/image/KaosPutih.svg",

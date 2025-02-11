@@ -5,16 +5,20 @@ import Footer from "../../components/Footer/Footer";
 import DetailBank from "../../pages/Pembayaran/DetailBank";
 import DetailEwallet from "../../pages/Pembayaran/DetailEwallet";
 import { useNavigate, useParams } from "react-router-dom";
+import { uploadToSupabase } from "../../components/SupabaseConfig";
 import api from "../../utils/api";
+import { toast, ToastContainer } from 'react-toastify'; // Import Toastify
+import 'react-toastify/dist/ReactToastify.css'; // Import CSS untuk Toastify
 
 export default function OrderDetail() {
   const [order, setOrder] = useState(null);
   const [isLoading, setIsLoading] = useState(true);
   const [image, setImage] = useState(null);
-  const [showUploadModal, setShowUploadModal] = useState(false); // Modal untuk unggah gambar
-  const [showImageModal, setShowImageModal] = useState(false); // Modal untuk tampilkan gambar
-  const [selectedImage, setSelectedImage] = useState(''); // Menyimpan gambar yang dipilih
-  const [selectedMethod, setSelectedMethod] = useState(null); // Track selected method (Bank or E-wallet)
+  const [showUploadModal, setShowUploadModal] = useState(false);
+  const [showImageModal, setShowImageModal] = useState(false);
+  const [selectedImage, setSelectedImage] = useState('');
+  const [selectedMethod, setSelectedMethod] = useState(null);
+  const [rejectComment, setRejectComment] = useState('');
   const { orderId } = useParams();
   const navigate = useNavigate();
 
@@ -32,7 +36,7 @@ export default function OrderDetail() {
     try {
       const token = localStorage.getItem("token");
       if (!token) {
-        alert("Token hilang, silakan login kembali.");
+        toast.error("Token hilang, silakan login kembali."); // Ganti alert dengan toast
         navigate("/login");
         return;
       }
@@ -40,7 +44,7 @@ export default function OrderDetail() {
       const response = await api.get(`/api/orders/${orderId}`, {
         headers: { Authorization: `Bearer ${token}` },
       });
-      console.log(response)
+      // console.log(response)
 
       const items = JSON.parse(response.data.items);
       const shippingDetails = JSON.parse(response.data.shipping_details);
@@ -50,9 +54,12 @@ export default function OrderDetail() {
         items,
         shipping_details: shippingDetails,
       });
+      if (response.data.status === 'Rejected') {
+        setRejectComment(response.data.reject_comment || 'Tidak ada komentar');
+      }
     } catch (error) {
       console.error("Error fetching order detail:", error);
-      alert(`Gagal mengambil detail pesanan: ${error.response?.data?.message || error.message}`);
+      toast.error(`Gagal mengambil detail pesanan: ${error.response?.data?.message || error.message}`); // Ganti alert dengan toast
     } finally {
       setIsLoading(false);
     }
@@ -64,40 +71,76 @@ export default function OrderDetail() {
       setImage(file);
     }
   };
-  
+
   const handleUploadImage = async () => {
+    // console.log("handleUploadImage called");
+
     if (!image) {
-      alert("Silakan pilih gambar terlebih dahulu!");
+      toast.error("Silakan pilih gambar terlebih dahulu!"); // Ganti alert dengan toast
+      // console.log("No image selected");
       return;
     }
-  
+
+    if (image.size > 5 * 1024 * 1024) {
+      toast.error("Ukuran file maksimal 5 MB"); // Ganti alert dengan toast
+      // console.log("Image size exceeds 5 MB");
+      return;
+    }
+
     const token = localStorage.getItem("token");
+    // console.log("Token retrieved:", token);
+
+    const fileParts = image.name.split('.').filter(Boolean);
+    const fileName = fileParts.slice(0, -1).join('.');
+    const fileType = fileParts.slice(-1)[0];
+    const timestamp = new Date().toISOString();
+    const newFileName = `${fileName} ${timestamp}.${fileType}`;
+    // console.log("New file name:", newFileName);
+
+    const publicUrl = await uploadToSupabase(newFileName, image);
+    // console.log("Uploaded image URL:", publicUrl);
+
     const formData = new FormData();
-    formData.append("image", image);
-  
+    formData.append("image", publicUrl);
+    formData.append("fileName", newFileName);
+    formData.append("orderId", orderId);
+
+    // console.log("FormData prepared:", { orderId });
+
     try {
-      const response = await api.post(`/api/orders/upload/${orderId}`, formData, {
-        headers: {
-          Authorization: `Bearer ${token}`,
-          "Content-Type": "multipart/form-data",
-        },
-      });
-  
-      console.log(response.data);
-      alert(response.data.message);
-  
-      setOrder({
-        ...order,
-        image: response.data.image,
+      const response = await fetch(
+        `https://back-end-vastra.vercel.app/api/orders/upload/${orderId}`,
+        {
+          method: "POST",
+          headers: {
+            Authorization: `Bearer ${token}`,
+          },
+          body: formData,
+        }
+      );
+
+      // console.log("Response status:", response.status);
+      if (!response.ok) {
+        throw new Error(`HTTP error! Status: ${response.status}`);
+      }
+
+      const data = await response.json();
+      // console.log("Response data:", data);
+      toast.success(data.message); // Ganti alert dengan toast
+
+      setOrder((prevOrder) => ({
+        ...prevOrder,
+        image: data.image,
         status: "Waiting Confirm",
-      });
+      }));
+
       setShowUploadModal(false);
     } catch (error) {
       console.error("Error uploading image:", error);
-      alert(`Gagal mengunggah gambar: ${error.response?.data?.message || error.message}`);
+      toast.error(`Gagal mengunggah gambar: ${error.message}`); // Ganti alert dengan toast
     }
   };
-  
+
   const handleSelectMethod = (method) => {
     setSelectedMethod(method);
   };
@@ -117,6 +160,7 @@ export default function OrderDetail() {
 
   return (
     <>
+      <ToastContainer /> {/* Tambahkan ToastContainer di sini */}
       <div className="flex w-full flex-col bg-white-a700">
         <Header />
         <div className="mt-[24px] mx-4 md:mx-[123px] lg:mx-[145px] mb-[133px]">
@@ -131,11 +175,17 @@ export default function OrderDetail() {
                 <div>
                   <div className="space-y-4">
                     <Text className="text-lg font-bold">Status: {order.status}</Text>
+                    {order.status === 'Rejected' && (
+                      <div className="bg-red-100 p-4 rounded-md">
+                        <strong>Alasan Penolakan:</strong>
+                        <p>{rejectComment}</p>
+                      </div>
+                    )}
                     <div className="flex items-center gap-2">
                       <Text className="text-lg font-bold">Pembayaran:</Text>
                       {order.image ? (
                         <button
-                          onClick={() => handleImageClick(`http://localhost:3333${order.image}`)}
+                          onClick={() => handleImageClick(order.image)}
                           className="bg-gray-500 text-white px-2 py-1 rounded-md text-xs flex items-center gap-1"
                         >
                           <i className="fas fa-eye"></i> Bukti
@@ -154,22 +204,34 @@ export default function OrderDetail() {
                       Total: Rp {order.total.toLocaleString("id-ID")}
                     </Text>
 
-                    {/* Upload Bukti Pembayaran */}
-                    {!order.image && (
-                      <div className="mt-4">
-                        <Button
-                          className="mt-2"
-                          style={{ backgroundColor: "black", color: "white" }}
-                          onClick={() => setShowUploadModal(true)}
-                        >
-                          Unggah Bukti Pembayaran
-                        </Button>
-                      </div>
-                    )}
+                    {/* Tampilkan tombol unggah jika status adalah 'Rejected' */}
+                  {order.status === 'Rejected' && (
+                    <div className="mt-4">
+                      <Button
+                        className="mt-2"
+                        style={{ backgroundColor: "black", color: "white" }}
+                        onClick={() => setShowUploadModal(true)}
+                      >
+                        Unggah Kembali Bukti Pembayaran
+                      </Button>
+                    </div>
+                  )}
 
-                    <div>
-                      <Heading as="h3" className="text-md font-bold">
-                        Barang:
+                  {!order.image && order.status !== 'Rejected' && (
+                    <div className="mt-4">
+                      <Button
+                        className="mt-2"
+                        style={{ backgroundColor: "black", color: "white" }}
+                        onClick={() => setShowUploadModal(true)}
+                      >
+                        Unggah Bukti Pembayaran
+                      </Button>
+                    </div>
+                  )}
+
+                  <div>
+                    <Heading as="h3" className="text-md font-bold">
+                      Barang:
                       </Heading>
                       {order.items && order.items.length > 0 ? (
                         order.items.map((item, index) => (
@@ -208,76 +270,70 @@ export default function OrderDetail() {
         <Footer />
       </div>
 
-      {/* Modal untuk Unggah Bukti Pembayaran */}
       {showUploadModal && (
         <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4">
-            <div className="bg-white rounded-lg max-w-2xl max-h-[90vh] overflow-y-auto relative p-6">
+          <div className="bg-white rounded-lg max-w-2xl max-h-[90vh] overflow-y-auto relative p-6">
             <button
-                onClick={handleCloseUploadModal}
-                className="text-gray-500 absolute top-4 right-4 bg-white p-2 rounded-full shadow-lg"
+              onClick={handleCloseUploadModal}
+              className="text-gray-500 absolute top-4 right-4 bg-white p-2 rounded-full shadow-lg"
             >
-                X
+              X
             </button>
             <Heading as="h3" className="text-lg font-bold mb-4">
-                Unggah Bukti Pembayaran
+              Unggah Bukti Pembayaran
             </Heading>
 
-            {/* Payment Method Selection */}
             {!selectedMethod && (
-                <div className="flex justify-center space-x-4">
+              <div className="flex justify-center space-x-4">
                 <Button
-                    className="w-full !bg-black !text-white py-2"
-                    onClick={() => handleSelectMethod("bank")}
+                  className="w-full !bg-black !text-white py-2"
+                  onClick={() => handleSelectMethod("bank")}
                 >
-                    Pilih Bank
+                  Pilih Bank
                 </Button>
                 <Button
-                    className="w-full !bg-black !text-white py-2"
-                    onClick={() => handleSelectMethod("ewallet")}
+                  className="w-full !bg-black !text-white py-2"
+                  onClick={() => handleSelectMethod("ewallet")}
                 >
-                    Pilih E-Wallet
+                  Pilih E-Wallet
                 </Button>
-                </div>
+              </div>
             )}
 
-            {/* Display selected method details */}
             {selectedMethod === "bank" && <DetailBank />}
             {selectedMethod === "ewallet" && <DetailEwallet />}
 
-            {/* Back Button (to choose method again) */}
             {selectedMethod && (
-                <div className="mt-4 text-center">
+              <div className="mt-4 text-center">
                 <Button
-                    className="w-full !bg-gray-500 !text-white py-2"
-                    onClick={() => setSelectedMethod(null)}
+                  className="w-full !bg-gray-500 !text-white py-2"
+                  onClick={() => setSelectedMethod(null)}
                 >
-                    Kembali Pilih Metode Pembayaran
+                  Kembali Pilih Metode Pembayaran
                 </Button>
-                </div>
+              </div>
             )}
 
-            {/* Upload Payment Image */}
             {selectedMethod && (
-                <>
+              <>
                 <input
-                    type="file"
-                    className="border border-gray-300 p-2 mb-4 w-full mx-auto"
-                    onChange={handleImageChange} // Pastikan menambahkan onChange handler untuk memilih gambar
+                  type="file"
+                  className="border border-gray-300 p-2 mb-4 w-full mx-auto"
+                  onChange={handleImageChange}
                 />
-                <Button 
-                    className="w-full !bg-black !text-white py-2"
-                    onClick={handleUploadImage} // Pastikan tombol ini men-trigger fungsi upload
-                    disabled={!image} // Disable tombol jika tidak ada gambar yang dipilih
+                <Button
+                  className="w-full !bg-black !text-white py-2"
+                  onClick={handleUploadImage}
+                  disabled={!image}
                 >
-                    Unggah Bukti
+                  Unggah Bukti
                 </Button>
-                </>
+              </>
             )}
-            </div>
+          </div>
         </div>
-        )}
+      )}
 
-      {/* Modal untuk Menampilkan Gambar */}
       {showImageModal && selectedImage && (
         <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4">
           <div className="bg-white rounded-lg max-w-2xl max-h-[90vh] overflow-y-auto relative p-6">

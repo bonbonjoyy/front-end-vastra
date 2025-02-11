@@ -1,8 +1,10 @@
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
 import { Icon } from "@iconify/react";
 import { Link, useNavigate } from "react-router-dom";
 import { useForm } from "react-hook-form";
 import api, { setAuthToken } from "../../utils/api";
+import { toast, ToastContainer } from 'react-toastify'; // Impor ToastContainer dan toast
+import 'react-toastify/dist/ReactToastify.css'; // Impor CSS untuk toast
 
 export default function Register() {
   const [showPassword, setShowPassword] = useState(false);
@@ -45,18 +47,29 @@ export default function Register() {
 
         // Tampilkan notifikasi terlebih dahulu
         setShowNotification(true);
-        setIsRegistered(true);
+        setIsRegistered(false);
         setIsFormVisible(false);
       }
     } catch (error) {
       console.error("Register error:", error);
-      alert(error.response?.data?.message || "Gagal membuat akun");
+      toast.error(error.response?.data?.message || "Gagal membuat akun");
     }
   };
 
   const handleLoginRedirect = () => {
     navigate("/login");
   };
+
+  // Effect untuk navigasi ke halaman home setelah 3 detik notifikasi muncul
+  useEffect(() => {
+    if (showNotification) {
+      const timer = setTimeout(() => {
+        navigate("/home");
+      }, 4000);
+
+      return () => clearTimeout(timer); // Bersihkan timeout jika komponen berubah sebelum waktu habis
+    }
+  }, [showNotification, navigate]);
 
   return (
     <div className="flex justify-center min-h-screen bg-white mt-2 lg:mt-0">
@@ -79,7 +92,7 @@ export default function Register() {
 
         {/* Bagian Form atau Notifikasi */}
         <div
-          className="flex flex-col items-start gap-6 w-full px-4 
+          className="flex flex-col items-start mb-10 lg:mb-0 gap-6 w-full px-4 
                   sm:items-center sm:mt-4 sm:pl-4 
                   md:w-[50%] md:px-8 md:order-1 
                   lg:mt-[70px] lg:pl-[2px]"
@@ -203,20 +216,20 @@ export default function Register() {
             </form>
           ) : (
             // Menampilkan notifikasi setelah form disembunyikan
-            <div className="ml-5 w-[300px]
+            <div className="ml-[40px] w-[300px] mb-60
                           sm:ml-24 sm:w-[300px]
-                          md:ml-24 md:w-[300px]
-                          lg:ml-24 lg:w-[300px]">
+                          md:ml-24 md:w-[300px] md:mb-0
+                          lg:ml-32 lg:w-[300px] lg:mb-0">
               {/* Notifikasi bahwa akun berhasil dibuat */}
               <div className="flex flex-col items-center font-bold mt-2 py-6 border bg-white border-2 border-solid border-black text-black
                           sm:mt-2 sm:py-8
-                          md:mt-2 md:py-8
-                          lg:mt-2 lg:py-8 lg:">
+                          md:mt-2 md:py-8 md:ml-0
+                          lg:mt-2 lg:py-8 lg:ml-0">
                 <p>Akun berhasil dibuat!</p>
               </div>
 
               {/* Teks "Ingat kata sandi Anda? Masuk" dengan link hanya pada kata "Masuk" */}
-              <div className="flex flex-row items-center mt-2 ml-[70px] mb-12
+              {/* <div className="flex flex-row items-center mt-2 ml-[70px] mb-12
                           sm:mt-2 sm:ml-16 sm:mb-24
                           md:mt-2 md:ml-16 md:mb-0
                           lg:mt-2 lg:ml-16 lg:mb-0">
@@ -227,9 +240,10 @@ export default function Register() {
                 >
                   Masuk
                 </button>
-              </div>
+              </div> */}
             </div>
           )}
+          <ToastContainer />
         </div>
       </div>
     </div>
