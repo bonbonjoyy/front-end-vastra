@@ -42,7 +42,7 @@ import PreppySweater from "./pages/Formal/PreppySweater";
 import PreppyCardigan from "./pages/Formal/PreppyCardigan";
 import SmartCasuall from "./pages/Formal/SmartCasuall";
 import Casuall from "./pages/Formal/Casuall";
-import Kreasi from "./pages/Kreasi/Index";
+import Kreasi from "./pages/Kreasi/index";
 import Admin from "./pages/Admin";
 import { PrivateRoute } from "./components";
 import ResetPassword from "./pages/Login/ResetPassword";
