@@ -20,6 +20,7 @@ export default function ResetPassword() {
     }
 
     try {
+      console.log('Submitting new password:', newPassword);
       await api.put("/api/users/resetpassword", {
         token: token,
         newPassword: newPassword,
