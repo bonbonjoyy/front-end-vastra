@@ -145,12 +145,12 @@ export default function Header({ ...props }) {
         isScrolled ? "shadow-md" : "border-b-black"
       }`}
     >
-      <div className="container-xs flex items-center justify-between gap-[2px] pr-24 w-full">
+      <div className="container-xs flex items-center justify-between gap-[2px] pr-[200px] lg:pr-24 w-full">
         {/* Burger Menu for Small Screens */}
         <div className="sm:hidden">
           <button
             onClick={toggleSidebar}
-            className="pl-6 pr-6 mt-2 text-gray-600 hover:text-black focus:outline-none"
+            className="pl-6 pr-4 mt-2 text-gray-600 hover:text-black focus:outline-none"
           >
             <svg
               xmlns="http://www.w3.org/2000/svg"
@@ -271,12 +271,12 @@ export default function Header({ ...props }) {
         </div>
 
         {/* Move Logo next to Burger Menu for Small Screens */}
-        <div className="sm:hidden flex items-center ml-2">
+        <div className="sm:hidden flex items-center">
           <Link to="/home">
             <img
               src="/asset/image/logo-new.svg"
               alt="Logo"
-              className="max-w-[60px] mr-[16vh] h-auto object-contain"
+              className="max-w-[75px] mr-[15vh] h-auto object-contain"
             />
           </Link>
         </div>
@@ -366,12 +366,12 @@ export default function Header({ ...props }) {
           </ul>
         </div>
 
-        <div className="flex gap-3 sm:gap-2 md:gap-6 lg:gap-7 relative md:mr-0">
+        <div className="flex ml-6 gap-5 sm:gap-2 md:gap-6 lg:gap-7 lg:ml-0 relative md:mr-0">
           {/* Profile Button */}
           <a id="profile-button" href="#" onClick={toggleProfileDropdown}>
             <svg
               xmlns="http://www.w3.org/2000/svg"
-              className="w-5 h-5 sm:w-5 sm:h-5 md:w-8 md:h-8 lg:w-[32px] lg:h-[32px]"
+              className="w-7 h-7 sm:w-5 sm:h-5 md:w-8 md:h-8 lg:w-[32px] lg:h-[32px]"
               viewBox="0 0 24 24"
             >
               <g
@@ -389,7 +389,7 @@ export default function Header({ ...props }) {
           {isProfileDropdownOpen && (
             <div
               ref={profileDropdownRef}
-              className="absolute right-24 sm:right-12 md:right-24 mt-6 sm:mt-8 md:mt-10 w-28 sm:w-48 md:w-56 bg-white border border-gray-300 shadow-lg z-10"
+              className="absolute right-8 mt-8 sm:right-12 md:right-24 mt-6 sm:mt-8 md:mt-10 w-28 sm:w-48 md:w-56 bg-white border border-gray-300 shadow-lg z-10"
             >
               <ul className="py-2">
                 <li>
@@ -431,10 +431,10 @@ export default function Header({ ...props }) {
           )}
 
           {/* Cart Button */}
-          <a href="#" onClick={toggleCart} className="pr-[55px]">
+          <a href="#" onClick={toggleCart} className="lg:pr-[55px]">
             <svg
               xmlns="http://www.w3.org/2000/svg"
-              className="w-5 h-5 sm:w-4 sm:h-4 md:w-7 md:h-7 lg:w-8 lg:h-8"
+              className="w-7 h-7 sm:w-4 sm:h-4 md:w-7 md:h-7 lg:w-8 lg:h-8"
               viewBox="0 0 56 56"
             >
               <path
