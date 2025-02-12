@@ -5,7 +5,6 @@ import { Link, useNavigate } from "react-router-dom";
 import { useForm } from "react-hook-form";
 import api from "../../utils/api";
 import { GoogleOAuthProvider, GoogleLogin } from "@react-oauth/google";
-import { jwtDecode } from "jwt-decode";
 import { toast, ToastContainer } from 'react-toastify'; // Impor ToastContainer dan toast
 import 'react-toastify/dist/ReactToastify.css'; // Impor CSS untuk toast
 
@@ -40,9 +39,12 @@ export default function Masuk() {
       }
     } catch (error) {
       console.error("Login error:", error);
-      toast.error(
-        error.response?.data?.message || "Email atau Kata Sandi salah"
-      );
+      // Menangani kesalahan dari backend
+      if (error.response) {
+        toast.error(error.response.data.message || "Email atau Kata Sandi salah");
+      } else {
+        toast.error("Terjadi kesalahan jaringan");
+      }
     }
   };
 
@@ -91,8 +93,7 @@ export default function Masuk() {
           <h1
             className="text-[32px] font-helvetica ml-[135px] text-center font-bold text-black 
                       sm:ml-[22px] text-center 
-                      md:text-[48px] 
-                      lg:ml-[120px]"
+                      md:text-[48px] lg:ml-[120px]"
           >
             MASUK
           </h1>
@@ -117,7 +118,7 @@ export default function Masuk() {
             <div className="relative w-full">
               <input
                 type={showPassword ? "text" : "password"}
-                {...register("kata_sandi", { required: "Kata Sandi wajib diisi" })} // Ganti 'password' dengan 'kata_sandi'
+                {...register("kata_sandi", { required: "Kata Sandi wajib diisi" })}
                 placeholder="Kata Sandi"
                 className="w-full h-9 px-4 font-helvetica text-[14px] text-black border border-black/50"
               />
