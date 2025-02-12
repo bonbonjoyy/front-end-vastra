@@ -107,7 +107,7 @@ export default function Masuk() {
               type="email"
               {...register("email", { required: "Email wajib diisi" })}
               placeholder="E-mail"
-              className="w-full h-9 px-4 font-hel vetica border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+              className="w-full h-9 px-4 font-helvetica text-[14px] text-black border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
             />
             {errors.email && <span className="text-red-500">{errors.email.message}</span>}
 
@@ -116,14 +116,18 @@ export default function Masuk() {
                 type={showPassword ? "text" : "password"}
                 {...register("kata_sandi", { required: "Kata Sandi wajib diisi" })}
                 placeholder="Kata Sandi"
-                className="w-full h-9 px-4 font-helvetica border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+                className="w-full h-9 px-4 font-helvetica text-[14px] text-black border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
               />
               <button
                 type="button"
                 onClick={togglePasswordVisibility}
-                className="absolute right-2 top-1/2 transform -translate-y-1/2"
+                className="absolute right-2 top-2 text-gray-500"
               >
-                <Icon icon={showPassword ? "mdi:eye-off" : "mdi:eye"} />
+                {showPassword ? (
+                  <Icon icon="mdi:eye-off" />
+                ) : (
+                  <Icon icon="mdi:eye" />
+                )}
               </button>
             </div>
             {errors.kata_sandi && <span className="text-red-500">{errors.kata_sandi.message}</span>}
@@ -140,10 +144,12 @@ export default function Masuk() {
             <Link to="/forgot-password" className="text-blue-500 hover:underline">
               Lupa Kata Sandi?
             </Link>
-            <GoogleOAuthProvider clientId="YOUR_GOOGLE_CLIENT_ID">
+            <GoogleOAuthProvider clientId={process.env.REACT_APP_GOOGLE_CLIENT_ID}>
               <GoogleLogin
                 onSuccess={handleGoogleSuccess}
-                onError={() => toast.error("Gagal login dengan Google")}
+                onError={() => {
+                  toast.error("Gagal login dengan Google");
+                }}
               />
             </GoogleOAuthProvider>
           </div>
