@@ -20,7 +20,7 @@ export default function ResetPassword() {
     }
 
     try {
-      await api.put("/api/users/resetpassword", {
+      await api.put("/resetpassword", {
         token: token,
         newPassword: newPassword,
       });
