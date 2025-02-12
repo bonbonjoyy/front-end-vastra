@@ -22,15 +22,16 @@ export default function Masuk() {
   };
 
   const onSubmit = async (data) => {
+    console.log("Data yang dikirim:", data); // Tambahkan log ini
     try {
       const response = await api.post("/auth/login", {
         email: data.email,
         kata_sandi: data.kata_sandi, // Menggunakan kata_sandi
       });
-
+  
       if (response.data.token) {
         localStorage.setItem("token", response.data.token);
-
+  
         if (response.data.user.role === "admin") {
           navigate("/admin");
         } else {
@@ -41,6 +42,7 @@ export default function Masuk() {
       console.error("Login error:", error);
       // Menangani kesalahan dari backend
       if (error.response) {
+        console.error("Response data:", error.response.data); // Tambahkan log ini
         toast.error(error.response.data.message || "Email atau Kata Sandi salah");
       } else {
         toast.error("Terjadi kesalahan jaringan");
