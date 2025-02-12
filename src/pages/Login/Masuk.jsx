@@ -28,10 +28,10 @@ export default function Masuk() {
         email: data.email,
         kata_sandi: data.kata_sandi, // Menggunakan kata_sandi
       });
-  
+
       if (response.data.token) {
         localStorage.setItem("token", response.data.token);
-  
+
         if (response.data.user.role === "admin") {
           navigate("/admin");
         } else {
@@ -52,13 +52,17 @@ export default function Masuk() {
 
   const handleGoogleSuccess = async (credentialResponse) => {
     try {
+      // Mengirim token dari Google ke backend untuk verifikasi
       const response = await api.post("/auth/google-login", {
-        token: credentialResponse.credential,
+        token: credentialResponse.credential, // Token dari Google
       });
 
+      // Jika login berhasil dan token diterima
       if (response.data.token) {
+        // Menyimpan token di localStorage
         localStorage.setItem("token", response.data.token);
 
+        // Menentukan halaman tujuan berdasarkan role
         if (response.data.user.role === "admin") {
           navigate("/admin");
         } else {
@@ -183,7 +187,8 @@ export default function Masuk() {
                   <GoogleLogin
                     onSuccess={handleGoogleSuccess}
                     onError={() => {
-                      // console.log("Login Failed");
+                      // Menangani kesalahan jika login gagal
+                      toast.error("Login gagal dengan Google");
                     }}
                     useOneTap
                   />
