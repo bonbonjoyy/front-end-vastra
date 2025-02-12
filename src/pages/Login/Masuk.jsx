@@ -26,6 +26,7 @@ export default function Masuk() {
     try {
       const response = await api.post("/auth/login", {
         email: data.email,
+        username: data.username,
         kata_sandi: data.kata_sandi, // Menggunakan kata_sandi
       });
 
@@ -41,7 +42,7 @@ export default function Masuk() {
     } catch (error) {
       console.error("Login error:", error);
       toast.error(
-        error.response?.data?.message || "Email atau Kata Sandi salah"
+        error.response?.data?.message || "Email/Username atau Kata Sandi salah"
       );
     }
   };
@@ -112,6 +113,16 @@ export default function Masuk() {
             />
             {errors.email && (
               <p className="text-red-500 text-sm">{errors.email.message}</p>
+            )}
+
+            <input
+              type="text"
+              {...register("username", { required: "Username wajib diisi" })}
+              placeholder="Username"
+              className="w-full h-9 px-4 font-helvetica text-[14px] text-black border border-black/50"
+            />
+            {errors.username && (
+              <p className="text-red-500 text-sm">{errors.username.message}</p>
             )}
 
             <div className="relative w-full">
