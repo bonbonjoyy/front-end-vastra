@@ -5,7 +5,6 @@ import { Link, useNavigate } from "react-router-dom";
 import { useForm } from "react-hook-form";
 import api from "../../utils/api";
 import { GoogleOAuthProvider, GoogleLogin } from "@react-oauth/google";
-import { jwtDecode } from "jwt-decode";
 import { toast, ToastContainer } from 'react-toastify'; // Impor ToastContainer dan toast
 import 'react-toastify/dist/ReactToastify.css'; // Impor CSS untuk toast
 
@@ -26,7 +25,6 @@ export default function Masuk() {
     try {
       const response = await api.post("/auth/login", {
         email: data.email,
-        username: data.username,
         kata_sandi: data.kata_sandi, // Menggunakan kata_sandi
       });
 
@@ -42,7 +40,7 @@ export default function Masuk() {
     } catch (error) {
       console.error("Login error:", error);
       toast.error(
-        error.response?.data?.message || "Email/Username atau Kata Sandi salah"
+        error.response?.data?.message || "Email atau Kata Sandi salah"
       );
     }
   };
@@ -109,108 +107,49 @@ export default function Masuk() {
               type="email"
               {...register("email", { required: "Email wajib diisi" })}
               placeholder="E-mail"
-              className="w-full h-9 px-4 font-helvetica text-[14px] text-black border border-black/50"
+              className="w-full h-9 px-4 font-hel vetica border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
             />
-            {errors.email && (
-              <p className="text-red-500 text-sm">{errors.email.message}</p>
-            )}
-
-            <input
-              type="text"
-              {...register("username", { required: "Username wajib diisi" })}
-              placeholder="Username"
-              className="w-full h-9 px-4 font-helvetica text-[14px] text-black border border-black/50"
-            />
-            {errors.username && (
-              <p className="text-red-500 text-sm">{errors.username.message}</p>
-            )}
+            {errors.email && <span className="text-red-500">{errors.email.message}</span>}
 
             <div className="relative w-full">
               <input
                 type={showPassword ? "text" : "password"}
-                {...register("kata_sandi", { required: "Kata Sandi wajib diisi" })} // Ganti 'password' dengan 'kata_sandi'
+                {...register("kata_sandi", { required: "Kata Sandi wajib diisi" })}
                 placeholder="Kata Sandi"
-                className="w-full h-9 px-4 font-helvetica text-[14px] text-black border border-black/50"
+                className="w-full h-9 px-4 font-helvetica border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
               />
               <button
                 type="button"
                 onClick={togglePasswordVisibility}
-                className="absolute right-3 top-1/2 -translate-y-1/2"
+                className="absolute right-2 top-1/2 transform -translate-y-1/2"
               >
-                <Icon
-                  icon={showPassword ? "mdi:eye-off" : "mdi:eye"}
-                  width="24"
-                  height="24"
-                />
+                <Icon icon={showPassword ? "mdi:eye-off" : "mdi:eye"} />
               </button>
             </div>
-            {errors.kata_sandi && (
-              <p className="text-red-500 text-sm">{errors.kata_sandi.message}</p>
-            )}
+            {errors.kata_sandi && <span className="text-red-500">{errors.kata_sandi.message}</span>}
 
             <button
               type="submit"
-              className="w-full py-2.5 bg-white text-black font-helvetica text-[12px] border border-black hover:bg-black hover:text-white transition-colors"
+              className="w-full h-10 bg-blue-500 text-white rounded-md hover:bg-blue-600 transition duration-200"
             >
               Masuk
             </button>
-
-            <div className="flex justify-start">
-              <Link
-                to="/lupa-password"
-                className="text-[12px] font-helvetica text-[#1E1BCF]"
-              >
-                Lupa Kata Sandi?
-              </Link>
-            </div>
-
-            <div className="flex flex-col items-center w-full">
-              <p className="text-[12px] font-helvetica text-[#868686]">
-                Atau masuk dengan
-              </p>
-            </div>
-
-            <GoogleOAuthProvider clientId={import.meta.env.VITE_GOOGLE_CLIENT_ID}>
-              <div className="w-full">
-                <button
-                  type="button"
-                  onClick={() => {
-                    const googleLoginButton = document.querySelector(
-                      '[role="button"][aria-labelledby="button-label"]'
-                    );
-                    if (googleLoginButton) {
-                      googleLoginButton.click();
-                    }
-                  }}
-                  className="w-full flex items-center justify-center gap-2 py-2.5 bg-white text-black font-helvetica text-[14px] border border-black hover:bg-black hover:text-white transition-colors"
-                >
-                  <Icon icon="flat-color-icons:google" width="22" height="22" />
-                  Masuk Dengan Google
-                </button>
-                <div className="hidden">
-                  <GoogleLogin
-                    onSuccess={handleGoogleSuccess}
-                    onError={() => {
-                      // console.log("Login Failed");
-                    }}
-                    useOneTap
-                  />
-                </div>
-              </div>
-            </GoogleOAuthProvider>
-
-            <div className="flex justify-center items-center gap-1 mt-2 mb-12 lg:mb-0">
-              <span className="text-[12px] font-helvetica text-[#868686]">
-                Belum punya akun?
-              </span>
-              <Link to="/register" className="text-[12px] font-helvetica text-[#1E1BCF]">
-                Daftar
-              </Link>
-            </div>
           </form>
-          <ToastContainer />
+
+          <div className="flex flex-col items-center gap-4">
+            <Link to="/forgot-password" className="text-blue-500 hover:underline">
+              Lupa Kata Sandi?
+            </Link>
+            <GoogleOAuthProvider clientId="YOUR_GOOGLE_CLIENT_ID">
+              <GoogleLogin
+                onSuccess={handleGoogleSuccess}
+                onError={() => toast.error("Gagal login dengan Google")}
+              />
+            </GoogleOAuthProvider>
+          </div>
         </div>
       </div>
+      <ToastContainer />
     </div>
   );
 }
